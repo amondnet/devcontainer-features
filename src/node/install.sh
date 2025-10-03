@@ -250,14 +250,13 @@ echo "✅ Node.js installation completed!"
 echo "=========================================="
 su - ${USERNAME} << 'EOF'
 export PATH="$HOME/.local/share/fnm:$PATH"
-eval "$(fnm env --use-on-cd)"
-echo "Node.js: $(node --version)"
-echo "npm: $(npm --version)"
-if command -v yarn &> /dev/null; then
-    echo "Yarn: $(yarn --version)"
+echo "Node.js: $(fnm exec --using=default node --version)"
+echo "npm: $(fnm exec --using=default npm --version)"
+if fnm exec --using=default yarn --version &> /dev/null; then
+    echo "Yarn: $(fnm exec --using=default yarn --version)"
 fi
-if command -v pnpm &> /dev/null; then
-    echo "pnpm: $(pnpm --version)"
+if fnm exec --using=default pnpm --version &> /dev/null; then
+    echo "pnpm: $(fnm exec --using=default pnpm --version)"
 fi
 EOF
 
