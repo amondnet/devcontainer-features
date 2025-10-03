@@ -135,9 +135,7 @@ if [ "${DENO_VERSION}" = "latest" ]; then
 curl -fsSL https://deno.land/install.sh | sh
 EOF
 else
-    su - ${USERNAME} << EOF
-curl -fsSL https://deno.land/install.sh | sh -s v${DENO_VERSION}
-EOF
+    su - ${USERNAME} bash -c "curl -fsSL https://deno.land/install.sh | sh -s v${DENO_VERSION}"
 fi
 
 # Add to shell configs for the target user
