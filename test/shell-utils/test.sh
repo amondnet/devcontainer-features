@@ -35,11 +35,12 @@ if [ "$zimfw_exists" = false ] && [ "$ohmyzsh_exists" = false ]; then
 fi
 
 # Check Oh My Posh (should be installed by default)
-check "oh-my-posh installed" bash -c "command -v oh-my-posh"
+# Note: oh-my-posh is in ~/.local/bin which may not be in non-login shell PATH
+check "oh-my-posh installed" bash -c "test -f $HOME/.local/bin/oh-my-posh"
 
-# Only check version if oh-my-posh is installed
-if command -v oh-my-posh &> /dev/null; then
-    check "oh-my-posh version" bash -c "oh-my-posh --version"
+# Check version with explicit path since test runs in non-login shell
+if [ -f "$HOME/.local/bin/oh-my-posh" ]; then
+    check "oh-my-posh version" bash -c "$HOME/.local/bin/oh-my-posh --version"
 fi
 
 # Report result

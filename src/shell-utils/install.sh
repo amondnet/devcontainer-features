@@ -170,17 +170,6 @@ EOF
     echo "✅ Oh My Zsh installed"
 fi
 
-# Copy shell configurations to root user if installing for non-root
-if [ "${USERNAME}" != "root" ]; then
-    copy_files=()
-    [ -f "${USER_HOME}/.zshrc" ] && copy_files+=("${USER_HOME}/.zshrc")
-    [ -d "${USER_HOME}/.zim" ] && copy_files+=("${USER_HOME}/.zim")
-    [ -d "${USER_HOME}/.oh-my-zsh" ] && copy_files+=("${USER_HOME}/.oh-my-zsh")
-    if [ ${#copy_files[@]} -gt 0 ]; then
-        cp -rf "${copy_files[@]}" /root/
-    fi
-fi
-
 # Install Oh My Posh if requested
 if [ "${INSTALLOHMYPOSH}" = "true" ]; then
     echo "Installing Oh My Posh..."
@@ -220,6 +209,21 @@ BASHRC_EOF
     fi
 
     echo "✅ Oh My Posh installed"
+fi
+
+# Copy shell configurations to root user if installing for non-root
+# This must be done AFTER all installations (frameworks + Oh My Posh)
+if [ "${USERNAME}" != "root" ]; then
+    copy_files=()
+    [ -f "${USER_HOME}/.zshrc" ] && copy_files+=("${USER_HOME}/.zshrc")
+    [ -f "${USER_HOME}/.bashrc" ] && copy_files+=("${USER_HOME}/.bashrc")
+    [ -d "${USER_HOME}/.zim" ] && copy_files+=("${USER_HOME}/.zim")
+    [ -d "${USER_HOME}/.oh-my-zsh" ] && copy_files+=("${USER_HOME}/.oh-my-zsh")
+    [ -d "${USER_HOME}/.local" ] && copy_files+=("${USER_HOME}/.local")
+    [ -d "${USER_HOME}/.cache" ] && copy_files+=("${USER_HOME}/.cache")
+    if [ ${#copy_files[@]} -gt 0 ]; then
+        cp -rf "${copy_files[@]}" /root/
+    fi
 fi
 
 echo "=========================================="
