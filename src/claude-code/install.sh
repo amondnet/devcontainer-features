@@ -92,32 +92,77 @@ clean_up() {
 }
 
 
+# Determine the appropriate non-root user
+if [ "${_REMOTE_USER}" != "root" ]; then
+    USERNAME="${_REMOTE_USER}"
+else
+    USERNAME="${USERNAME:-"automatic"}"
+fi
+
+if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
+    USERNAME=""
+    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
+    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
+        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
+            USERNAME=${CURRENT_USER}
+            break
+        fi
+    done
+    if [ "${USERNAME}" = "" ]; then
+        USERNAME=root
+    fi
+elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
+    USERNAME=root
+fi
+
+USER_HOME="/root"
+if [ "${USERNAME}" != "root" ]; then
+    USER_HOME="/home/${USERNAME}"
+fi
+
 echo "Installing Claude Code CLI..."
+echo "Installing for user: ${USERNAME}"
+echo "Home directory: ${USER_HOME}"
 
 # Install required packages
 check_packages curl ca-certificates
 
-# Install Claude Code
+# Install Claude Code as the target user
+su - ${USERNAME} << 'EOF'
 curl -fsSL https://claude.ai/install.sh | bash
+EOF
 
-# Setup PATH
-export PATH="$HOME/.local/bin:$PATH"
-
-# Add to shell configs
-if [ -f "${HOME}/.zshrc" ]; then
-    grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "${HOME}/.zshrc" || \
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "${HOME}/.zshrc"
+# Add to shell configs for the target user
+if [ -f "${USER_HOME}/.zshrc" ]; then
+    grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "${USER_HOME}/.zshrc" || \
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "${USER_HOME}/.zshrc"
 fi
 
-if [ -f "${HOME}/.bashrc" ]; then
-    grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "${HOME}/.bashrc" || \
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "${HOME}/.bashrc"
+if [ -f "${USER_HOME}/.bashrc" ]; then
+    grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "${USER_HOME}/.bashrc" || \
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "${USER_HOME}/.bashrc"
+fi
+
+# Copy .local to root user if installing for non-root
+if [ "${USERNAME}" != "root" ]; then
+    if [ -d "${USER_HOME}/.local" ]; then
+        cp -rf "${USER_HOME}/.local" /root/
+    fi
+
+    # Also add to root's shell configs
+    if [ -f "/root/.bashrc" ]; then
+        grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "/root/.bashrc" || \
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc
+    fi
 fi
 
 echo "✅ Claude Code CLI installed successfully!"
+su - ${USERNAME} << 'EOF'
+export PATH="$HOME/.local/bin:$PATH"
 if command -v claude &> /dev/null; then
     claude --version
 fi
+EOF
 
 # Clean up
 clean_up

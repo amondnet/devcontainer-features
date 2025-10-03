@@ -92,37 +92,88 @@ clean_up() {
 }
 
 
+# Determine the appropriate non-root user
+if [ "${_REMOTE_USER}" != "root" ]; then
+    USERNAME="${_REMOTE_USER}"
+else
+    USERNAME="${USERNAME:-"automatic"}"
+fi
+
+if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
+    USERNAME=""
+    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
+    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
+        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
+            USERNAME=${CURRENT_USER}
+            break
+        fi
+    done
+    if [ "${USERNAME}" = "" ]; then
+        USERNAME=root
+    fi
+elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
+    USERNAME=root
+fi
+
+USER_HOME="/root"
+if [ "${USERNAME}" != "root" ]; then
+    USER_HOME="/home/${USERNAME}"
+fi
+
 echo "Installing SDKMAN..."
+echo "Installing for user: ${USERNAME}"
+echo "Home directory: ${USER_HOME}"
 
 # Install required packages
 check_packages curl ca-certificates zip unzip
 
-# Install SDKMAN
+# Install SDKMAN as the target user
+su - ${USERNAME} << 'EOF'
 curl -s "https://get.sdkman.io" | bash
+EOF
 
-# Setup SDKMAN environment
-export SDKMAN_DIR="$HOME/.sdkman"
-
-# Source SDKMAN initialization in shell configs
-if [ -f "${HOME}/.zshrc" ]; then
-    echo '' >> "${HOME}/.zshrc"
-    echo '# SDKMAN initialization' >> "${HOME}/.zshrc"
-    echo 'export SDKMAN_DIR="$HOME/.sdkman"' >> "${HOME}/.zshrc"
-    echo '[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"' >> "${HOME}/.zshrc"
+# Source SDKMAN initialization in shell configs for the target user
+if [ -f "${USER_HOME}/.zshrc" ]; then
+    if ! grep -qF 'SDKMAN initialization' "${USER_HOME}/.zshrc"; then
+        echo '' >> "${USER_HOME}/.zshrc"
+        echo '# SDKMAN initialization' >> "${USER_HOME}/.zshrc"
+        echo 'export SDKMAN_DIR="$HOME/.sdkman"' >> "${USER_HOME}/.zshrc"
+        echo '[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"' >> "${USER_HOME}/.zshrc"
+    fi
 fi
 
-if [ -f "${HOME}/.bashrc" ]; then
-    echo '' >> "${HOME}/.bashrc"
-    echo '# SDKMAN initialization' >> "${HOME}/.bashrc"
-    echo 'export SDKMAN_DIR="$HOME/.sdkman"' >> "${HOME}/.bashrc"
-    echo '[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"' >> "${HOME}/.bashrc"
+if [ -f "${USER_HOME}/.bashrc" ]; then
+    if ! grep -qF 'SDKMAN initialization' "${USER_HOME}/.bashrc"; then
+        echo '' >> "${USER_HOME}/.bashrc"
+        echo '# SDKMAN initialization' >> "${USER_HOME}/.bashrc"
+        echo 'export SDKMAN_DIR="$HOME/.sdkman"' >> "${USER_HOME}/.bashrc"
+        echo '[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"' >> "${USER_HOME}/.bashrc"
+    fi
 fi
 
-# Source for current session
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+# Copy sdkman installation to root user if installing for non-root
+if [ "${USERNAME}" != "root" ]; then
+    if [ -d "${USER_HOME}/.sdkman" ]; then
+        cp -rf "${USER_HOME}/.sdkman" /root/
+    fi
+
+    # Also add to root's shell configs
+    if [ -f "/root/.bashrc" ]; then
+        if ! grep -qF 'SDKMAN initialization' "/root/.bashrc"; then
+            echo '' >> /root/.bashrc
+            echo '# SDKMAN initialization' >> /root/.bashrc
+            echo 'export SDKMAN_DIR="$HOME/.sdkman"' >> /root/.bashrc
+            echo '[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"' >> /root/.bashrc
+        fi
+    fi
+fi
 
 echo "✅ SDKMAN installed successfully!"
+su - ${USERNAME} << 'EOF'
+export SDKMAN_DIR="$HOME/.sdkman"
+source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk version
+EOF
 
 # Clean up
 clean_up
