@@ -9,6 +9,9 @@ set -e
 # shellcheck source=/dev/null
 source dev-container-features-test-lib
 
+# Setup environment
+export PATH="$HOME/.bun/bin:$PATH"
+
 # Feature-specific tests
 check "bun installed" bash -c "command -v bun"
 check "bun version" bash -c "bun --version"
