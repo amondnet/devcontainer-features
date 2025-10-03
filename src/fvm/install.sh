@@ -129,6 +129,7 @@ check_packages curl ca-certificates
 
 # Install FVM as the target user
 su - ${USERNAME} << 'EOF'
+export FVM_ALLOW_ROOT=true
 curl -fsSL https://fvm.app/install.sh | bash
 EOF
 
