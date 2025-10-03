@@ -19,8 +19,20 @@ Installs Homebrew package manager for Linux.
 ### graphite
 Installs Graphite CLI for stacked pull request workflows.
 
-### dev-tools
-Installs additional development tools (Bun, Deno, SDKMAN, Claude Code, FVM).
+### bun
+Installs Bun - Fast JavaScript runtime and toolkit.
+
+### deno
+Installs Deno - Secure TypeScript/JavaScript runtime.
+
+### sdkman
+Installs SDKMAN - Software Development Kit Manager for Java/JVM ecosystem.
+
+### claude-code
+Installs Claude Code - AI-powered coding assistant CLI.
+
+### fvm
+Installs FVM - Flutter Version Management.
 
 ## Usage
 
@@ -29,14 +41,18 @@ Installs additional development tools (Bun, Deno, SDKMAN, Claude Code, FVM).
 ```json
 {
   "features": {
-    "ghcr.io/rebooter-dev/devcontainer-features/zimfw:1": {},
-    "ghcr.io/rebooter-dev/devcontainer-features/fnm:1": {
-      "nodeVersion": "22"
+    "ghcr.io/amondnet/devcontainer-features/zimfw:1": {},
+    "ghcr.io/amondnet/devcontainer-features/fnm:1": {
+      "version": "22"
     },
-    "ghcr.io/rebooter-dev/devcontainer-features/ohmyposh:1": {},
-    "ghcr.io/rebooter-dev/devcontainer-features/homebrew:1": {},
-    "ghcr.io/rebooter-dev/devcontainer-features/graphite:1": {},
-    "ghcr.io/rebooter-dev/devcontainer-features/dev-tools:1": {}
+    "ghcr.io/amondnet/devcontainer-features/ohmyposh:1": {},
+    "ghcr.io/amondnet/devcontainer-features/homebrew:1": {},
+    "ghcr.io/amondnet/devcontainer-features/graphite:1": {},
+    "ghcr.io/amondnet/devcontainer-features/bun:1": {},
+    "ghcr.io/amondnet/devcontainer-features/deno:1": {},
+    "ghcr.io/amondnet/devcontainer-features/sdkman:1": {},
+    "ghcr.io/amondnet/devcontainer-features/claude-code:1": {},
+    "ghcr.io/amondnet/devcontainer-features/fvm:1": {}
   }
 }
 ```
