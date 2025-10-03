@@ -128,10 +128,17 @@ echo "Home directory: ${USER_HOME}"
 check_packages curl ca-certificates
 
 # Install FVM as the target user
-su - ${USERNAME} << 'EOF'
+if [ "${USERNAME}" = "root" ]; then
+    # When running as root, install directly without su
+    export FVM_ALLOW_ROOT=true
+    curl -fsSL https://fvm.app/install.sh | bash
+else
+    # For non-root users, use su
+    su - ${USERNAME} << 'EOF'
 export FVM_ALLOW_ROOT=true
 curl -fsSL https://fvm.app/install.sh | bash
 EOF
+fi
 
 # Add to shell configs for the target user
 if [ -f "${USER_HOME}/.zshrc" ]; then
@@ -158,12 +165,21 @@ if [ "${USERNAME}" != "root" ]; then
 fi
 
 echo "✅ FVM installed successfully!"
-su - ${USERNAME} << 'EOF'
+if [ "${USERNAME}" = "root" ]; then
+    # When root, run directly
+    export PATH="$HOME/.pub-cache/bin:$PATH"
+    if command -v fvm &> /dev/null; then
+        fvm --version
+    fi
+else
+    # For non-root users, use su
+    su - ${USERNAME} << 'EOF'
 export PATH="$HOME/.pub-cache/bin:$PATH"
 if command -v fvm &> /dev/null; then
     fvm --version
 fi
 EOF
+fi
 
 # Clean up
 clean_up
