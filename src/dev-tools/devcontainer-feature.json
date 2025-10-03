@@ -1,0 +1,34 @@
+{
+  "id": "dev-tools",
+  "version": "1.0.0",
+  "name": "Development Tools",
+  "description": "Installs additional development tools (Bun, Deno, SDKMAN, Claude Code, FVM)",
+  "documentationURL": "https://github.com/rebooter-dev/devcontainer-features/tree/main/src/dev-tools",
+  "options": {
+    "installBun": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Bun JavaScript runtime"
+    },
+    "installDeno": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Deno runtime"
+    },
+    "installSdkman": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install SDKMAN for Java/JVM tools"
+    },
+    "installClaudeCode": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Claude Code CLI"
+    },
+    "installFvm": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Flutter Version Management"
+    }
+  }
+}

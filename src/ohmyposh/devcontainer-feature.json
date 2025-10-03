@@ -1,0 +1,8 @@
+{
+  "id": "ohmyposh",
+  "version": "1.0.0",
+  "name": "Oh My Posh",
+  "description": "Installs Oh My Posh prompt theme engine",
+  "documentationURL": "https://github.com/rebooter-dev/devcontainer-features/tree/main/src/ohmyposh",
+  "options": {}
+}

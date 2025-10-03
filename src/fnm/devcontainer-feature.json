@@ -1,0 +1,19 @@
+{
+  "id": "fnm",
+  "version": "1.0.0",
+  "name": "Fast Node Manager",
+  "description": "Installs fnm and Node.js versions",
+  "documentationURL": "https://github.com/rebooter-dev/devcontainer-features/tree/main/src/fnm",
+  "options": {
+    "version": {
+      "type": "string",
+      "default": "22",
+      "description": "Node.js version to install and set as default"
+    },
+    "installLts": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install Node.js LTS version"
+    }
+  }
+}

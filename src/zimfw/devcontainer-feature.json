@@ -1,0 +1,8 @@
+{
+  "id": "zimfw",
+  "version": "1.0.0",
+  "name": "Zimfw",
+  "description": "Installs Zimfw - Zsh configuration framework",
+  "documentationURL": "https://github.com/rebooter-dev/devcontainer-features/tree/main/src/zimfw",
+  "options": {}
+}

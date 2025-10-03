@@ -1,0 +1,8 @@
+{
+  "id": "homebrew",
+  "version": "1.0.0",
+  "name": "Homebrew",
+  "description": "Installs Homebrew package manager for Linux",
+  "documentationURL": "https://github.com/rebooter-dev/devcontainer-features/tree/main/src/homebrew",
+  "options": {}
+}
