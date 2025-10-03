@@ -202,9 +202,11 @@ fi
 echo "Installed Node.js versions:"
 fnm list
 
-# Show current version
-node --version
-npm --version
+# Verify installation by running node through fnm
+echo "Node.js version:"
+fnm exec --using=default node --version
+echo "npm version:"
+fnm exec --using=default npm --version
 
 EOF
 
