@@ -216,8 +216,8 @@ if [ "${INSTALLYARN}" = "true" ]; then
     su - ${USERNAME} << 'EOF'
     export PATH="$HOME/.local/share/fnm:$PATH"
     eval "$(fnm env --use-on-cd)"
-    npm install -g yarn
-    yarn --version
+    fnm exec --using=default npm install -g yarn
+    fnm exec --using=default yarn --version
 EOF
 fi
 
@@ -228,11 +228,11 @@ if [ "${INSTALLPNPM}" = "true" ]; then
     export PATH="\$HOME/.local/share/fnm:\$PATH"
     eval "\$(fnm env --use-on-cd)"
     if [ "${PNPMVERSION}" = "latest" ]; then
-        npm install -g pnpm
+        fnm exec --using=default npm install -g pnpm
     else
-        npm install -g pnpm@${PNPMVERSION}
+        fnm exec --using=default npm install -g pnpm@${PNPMVERSION}
     fi
-    pnpm --version
+    fnm exec --using=default pnpm --version
 EOF
 fi
 
