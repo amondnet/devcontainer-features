@@ -179,15 +179,17 @@ if [ "${NODE_VERSION}" = "lts" ] || [ "${NODE_VERSION}" = "none" ]; then
     if [ "${INSTALLLTS}" = "true" ]; then
         echo "Installing Node.js LTS..."
         fnm install --lts
-        fnm default lts-latest
-        fnm use lts-latest
+        # Get the actual LTS version that was installed
+        INSTALLED_LTS=\$(fnm list | grep -oP 'v\d+\.\d+\.\d+' | head -n1 | sed 's/^v//')
+        if [ -n "\$INSTALLED_LTS" ]; then
+            fnm default "\$INSTALLED_LTS"
+        fi
     fi
 else
     # Install specified version first
     echo "Installing Node.js ${NODE_VERSION}..."
     fnm install "${NODE_VERSION}"
     fnm default "${NODE_VERSION}"
-    fnm use "${NODE_VERSION}"
 
     # Also install LTS if requested (different from specified version)
     if [ "${INSTALLLTS}" = "true" ]; then
