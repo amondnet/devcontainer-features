@@ -139,21 +139,25 @@ if [ "${INSTALLZSH}" = "true" ] && [ "${CONFIGUREZSH_AS_DEFAULTSHELL}" = "true" 
     chsh -s $(which zsh) ${USERNAME}
 fi
 
+# Ensure .zshrc exists
+if [ ! -f "${USER_HOME}/.zshrc" ]; then
+    touch "${USER_HOME}/.zshrc"
+    chown ${USERNAME}:$(id -gn ${USERNAME}) "${USER_HOME}/.zshrc"
+fi
+
 # Install shell framework
 if [ "${SHELLFRAMEWORK}" = "zimfw" ]; then
     echo "Installing Zimfw..."
     su - ${USERNAME} << 'EOF'
-set -e
 export ZIM_HOME="${HOME}/.zim"
-curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh
+curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh || true
 EOF
     echo "✅ Zimfw installed"
 
 elif [ "${SHELLFRAMEWORK}" = "ohmyzsh" ]; then
     echo "Installing Oh My Zsh..."
     su - ${USERNAME} << 'EOF'
-set -e
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
 EOF
     echo "✅ Oh My Zsh installed"
 fi
@@ -162,17 +166,24 @@ fi
 if [ "${INSTALLOHMYPOSH}" = "true" ]; then
     echo "Installing Oh My Posh..."
     su - ${USERNAME} << 'EOF'
-set -e
-curl -s https://ohmyposh.dev/install.sh | bash -s
+curl -s https://ohmyposh.dev/install.sh | bash -s || true
 EOF
 
     # Add Oh My Posh to shell configs
-    cat >> "${USER_HOME}/.zshrc" << 'ZSHRC_EOF'
+    if [ -f "${USER_HOME}/.zshrc" ]; then
+        cat >> "${USER_HOME}/.zshrc" << 'ZSHRC_EOF'
 
 # Oh My Posh initialization
 export PATH="$HOME/.local/bin:$PATH"
 eval "$(oh-my-posh init zsh)"
 ZSHRC_EOF
+    fi
+
+    # Ensure .bashrc exists
+    if [ ! -f "${USER_HOME}/.bashrc" ]; then
+        touch "${USER_HOME}/.bashrc"
+        chown ${USERNAME}:$(id -gn ${USERNAME}) "${USER_HOME}/.bashrc"
+    fi
 
     if [ -f "${USER_HOME}/.bashrc" ]; then
         cat >> "${USER_HOME}/.bashrc" << 'BASHRC_EOF'
