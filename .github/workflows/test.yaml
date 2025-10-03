@@ -16,7 +16,6 @@ jobs:
         features:
           - shell-utils
           - node
-          - homebrew
           - graphite
           - bun
           - deno
