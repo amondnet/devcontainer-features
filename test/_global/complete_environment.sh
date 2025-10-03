@@ -6,42 +6,54 @@
 set -e
 
 # Optional: Import test library bundled with the devcontainer CLI
+# shellcheck source=/dev/null
 source dev-container-features-test-lib
 
 echo "Testing complete development environment..."
 
+# Setup environment variables
+export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:$HOME/.pub-cache/bin:/home/linuxbrew/.linuxbrew/bin:$PATH"
+if command -v fnm &> /dev/null; then
+    eval "$(fnm env 2>/dev/null)" || true
+fi
+if command -v brew &> /dev/null; then
+    eval "$(brew shellenv 2>/dev/null)" || true
+fi
+
 # Shell utilities
-check "zsh installed" zsh --version
-check "oh-my-posh installed" command -v oh-my-posh
+check "zsh installed" bash -c "zsh --version"
+check "oh-my-posh installed" bash -c "command -v oh-my-posh"
 
 # Package managers
-check "brew installed" command -v brew
-check "graphite installed" command -v gt
+check "brew installed" bash -c "command -v brew"
+check "graphite installed" bash -c "command -v gt"
 
 # Node.js ecosystem
-check "fnm installed" command -v fnm
-check "node installed" command -v node
-check "yarn installed" command -v yarn
-check "pnpm installed" command -v pnpm
+check "fnm installed" bash -c "command -v fnm"
+check "node installed" bash -c "command -v node"
+check "yarn installed" bash -c "command -v yarn"
+check "pnpm installed" bash -c "command -v pnpm"
 
 # JavaScript/TypeScript runtimes
-check "bun installed" command -v bun
-check "deno installed" command -v deno
+check "bun installed" bash -c "command -v bun"
+check "deno installed" bash -c "command -v deno"
 
 # JVM ecosystem
-check "sdkman directory" test -d ~/.sdkman
+check "sdkman directory" bash -c "test -d $HOME/.sdkman"
 
 # Development tools
-check "claude-code path" test -d ~/.local/bin
+check "claude-code path" bash -c "test -d $HOME/.local/bin"
 
-# Flutter
-check "pub-cache directory" test -d ~/.pub-cache || echo "FVM not critical"
+# Flutter (optional - may not be critical)
+if [ -d "$HOME/.pub-cache" ]; then
+    check "pub-cache directory" bash -c "test -d $HOME/.pub-cache"
+fi
 
 # Integration tests
-check "node works" node -e "console.log('ok')"
-check "bun works" bun --version
-check "deno works" deno --version
-check "brew works" brew --version
+check "node works" bash -c "node -e \"console.log('ok')\""
+check "bun works" bash -c "bun --version"
+check "deno works" bash -c "deno --version"
+check "brew works" bash -c "brew --version"
 
 # Report result
 reportResults

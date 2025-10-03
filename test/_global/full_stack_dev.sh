@@ -6,30 +6,40 @@
 set -e
 
 # Optional: Import test library bundled with the devcontainer CLI
+# shellcheck source=/dev/null
 source dev-container-features-test-lib
 
+# Setup environment
+export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:/home/linuxbrew/.linuxbrew/bin:$PATH"
+if command -v fnm &> /dev/null; then
+    eval "$(fnm env 2>/dev/null)" || true
+fi
+if command -v brew &> /dev/null; then
+    eval "$(brew shellenv 2>/dev/null)" || true
+fi
+
 # Test shell utilities
-check "zsh installed" zsh --version
-check "oh-my-posh installed" command -v oh-my-posh
+check "zsh installed" bash -c "zsh --version"
+check "oh-my-posh installed" bash -c "command -v oh-my-posh"
 
 # Test Node.js ecosystem
-check "fnm installed" command -v fnm
-check "node installed" command -v node
-check "npm installed" command -v npm
-check "yarn installed" command -v yarn
-check "pnpm installed" command -v pnpm
+check "fnm installed" bash -c "command -v fnm"
+check "node installed" bash -c "command -v node"
+check "npm installed" bash -c "command -v npm"
+check "yarn installed" bash -c "command -v yarn"
+check "pnpm installed" bash -c "command -v pnpm"
 
 # Test Homebrew
-check "brew installed" command -v brew
+check "brew installed" bash -c "command -v brew"
 
 # Test modern runtimes
-check "bun installed" command -v bun
-check "deno installed" command -v deno
+check "bun installed" bash -c "command -v bun"
+check "deno installed" bash -c "command -v deno"
 
 # Verify integrations work
-check "node execution" node -e "console.log('Node.js works')"
-check "bun execution" bun --version
-check "deno execution" deno eval "console.log('Deno works')"
+check "node execution" bash -c "node -e \"console.log('Node.js works')\""
+check "bun execution" bash -c "bun --version"
+check "deno execution" bash -c "deno eval \"console.log('Deno works')\""
 
 # Report result
 reportResults
