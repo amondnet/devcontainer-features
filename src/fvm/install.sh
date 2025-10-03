@@ -127,6 +127,12 @@ echo "Home directory: ${USER_HOME}"
 # Install required packages
 check_packages curl ca-certificates sudo
 
+# Configure passwordless sudo for non-root user
+if [ "${USERNAME}" != "root" ]; then
+    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}
+    chmod 0440 /etc/sudoers.d/${USERNAME}
+fi
+
 # Install FVM as the target user
 if [ "${USERNAME}" = "root" ]; then
     # When running as root, install directly without su
