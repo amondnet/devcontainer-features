@@ -2,63 +2,63 @@
     "full_stack_dev": {
         "image": "ubuntu:22.04",
         "features": {
-            "./shell-utils": {
+            "../../src/shell-utils": {
                 "shellFramework": "zimfw",
                 "installOhMyPosh": true
             },
-            "./node": {
+            "../../src/node": {
                 "version": "22",
                 "installYarn": true,
                 "installPnpm": true
             },
-            "./graphite": {},
-            "./bun": {},
-            "./deno": {}
+            "../../src/graphite": {},
+            "../../src/bun": {},
+            "../../src/deno": {}
         }
     },
     "jvm_development": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "./shell-utils": {
+            "../../src/shell-utils": {
                 "shellFramework": "ohmyzsh",
                 "installOhMyPosh": false
             },
-            "./node": {
+            "../../src/node": {
                 "version": "lts"
             },
-            "./sdkman": {}
+            "../../src/sdkman": {}
         }
     },
     "minimal_javascript": {
         "image": "ubuntu:22.04",
         "features": {
-            "./shell-utils": {},
-            "./node": {
+            "../../src/shell-utils": {},
+            "../../src/node": {
                 "version": "20",
                 "installYarn": false,
                 "installPnpm": false
             },
-            "./bun": {}
+            "../../src/bun": {}
         }
     },
     "complete_environment": {
         "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
         "features": {
-            "./shell-utils": {
+            "../../src/shell-utils": {
                 "shellFramework": "zimfw",
                 "installOhMyPosh": true
             },
-            "./node": {
+            "../../src/node": {
                 "version": "22",
                 "installYarn": true,
                 "installPnpm": true
             },
-            "./graphite": {},
-            "./bun": {},
-            "./deno": {},
-            "./sdkman": {},
-            "./claude-code": {},
-            "./fvm": {}
+            "../../src/graphite": {},
+            "../../src/bun": {},
+            "../../src/deno": {},
+            "../../src/sdkman": {},
+            "../../src/claude-code": {},
+            "../../src/fvm": {}
         }
     }
 }
