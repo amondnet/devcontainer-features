@@ -4,14 +4,25 @@ Reusable Dev Container features for consistent development environments.
 
 ## Available Features
 
-### zimfw
-Installs Zimfw - Zsh configuration framework with useful modules.
+### shell-utils
+**Enhanced alternative to `common-utils`**
+Installs and configures Zsh with choice of Zimfw or Oh My Zsh, plus Oh My Posh for prompt customization. Combines the best of shell frameworks and modern prompt engines.
 
-### fnm
-Installs Fast Node Manager (fnm) and Node.js versions (LTS and v22).
+**Options:**
+- Choose between Zimfw (modern, fast) or Oh My Zsh (popular)
+- Optional Oh My Posh for cross-shell prompt themes
+- Automatic user detection
+- Package upgrade support
 
-### ohmyposh
-Installs Oh My Posh prompt theme engine for beautiful shell prompts.
+### node
+**Enhanced alternative to official `node` feature with fnm**
+Installs Node.js via fnm (Fast Node Manager) with yarn and pnpm support. Provides better performance than nvm while maintaining compatibility.
+
+**Options:**
+- Node.js version selection (lts, latest, 22, 20, 18)
+- Optional LTS installation
+- Yarn and pnpm support
+- nvm alias for compatibility
 
 ### homebrew
 Installs Homebrew package manager for Linux.
@@ -41,11 +52,15 @@ Installs FVM - Flutter Version Management.
 ```json
 {
   "features": {
-    "ghcr.io/amondnet/devcontainer-features/zimfw:1": {},
-    "ghcr.io/amondnet/devcontainer-features/fnm:1": {
-      "version": "22"
+    "ghcr.io/amondnet/devcontainer-features/shell-utils:1": {
+      "shellFramework": "zimfw",
+      "installOhMyPosh": true
     },
-    "ghcr.io/amondnet/devcontainer-features/ohmyposh:1": {},
+    "ghcr.io/amondnet/devcontainer-features/node:1": {
+      "version": "22",
+      "installYarn": true,
+      "installPnpm": true
+    },
     "ghcr.io/amondnet/devcontainer-features/homebrew:1": {},
     "ghcr.io/amondnet/devcontainer-features/graphite:1": {},
     "ghcr.io/amondnet/devcontainer-features/bun:1": {},
@@ -62,8 +77,13 @@ Installs FVM - Flutter Version Management.
 ```json
 {
   "features": {
-    "./.devcontainer/features/src/zimfw": {},
-    "./.devcontainer/features/src/fnm": {}
+    "./.devcontainer/features/src/shell-utils": {
+      "shellFramework": "zimfw",
+      "installOhMyPosh": true
+    },
+    "./.devcontainer/features/src/node": {
+      "version": "22"
+    }
   }
 }
 ```
