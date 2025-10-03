@@ -139,7 +139,15 @@ if [ "${INSTALLZSH}" = "true" ] && [ "${CONFIGUREZSH_AS_DEFAULTSHELL}" = "true" 
     chsh -s $(which zsh) ${USERNAME}
 fi
 
-# Ensure .zshrc exists
+# Restore .zshrc from /etc/skel if available
+if [ -f "/etc/skel/.zshrc" ]; then
+    if [ ! -e "${USER_HOME}/.zshrc" ] || [ ! -s "${USER_HOME}/.zshrc" ]; then
+        cp "/etc/skel/.zshrc" "${USER_HOME}/.zshrc"
+        chown ${USERNAME}:$(id -gn ${USERNAME}) "${USER_HOME}/.zshrc"
+    fi
+fi
+
+# Ensure .zshrc exists for target user (if /etc/skel didn't have one)
 if [ ! -f "${USER_HOME}/.zshrc" ]; then
     touch "${USER_HOME}/.zshrc"
     chown ${USERNAME}:$(id -gn ${USERNAME}) "${USER_HOME}/.zshrc"
@@ -160,6 +168,17 @@ elif [ "${SHELLFRAMEWORK}" = "ohmyzsh" ]; then
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended || true
 EOF
     echo "✅ Oh My Zsh installed"
+fi
+
+# Copy shell configurations to root user if installing for non-root
+if [ "${USERNAME}" != "root" ]; then
+    copy_files=()
+    [ -f "${USER_HOME}/.zshrc" ] && copy_files+=("${USER_HOME}/.zshrc")
+    [ -d "${USER_HOME}/.zim" ] && copy_files+=("${USER_HOME}/.zim")
+    [ -d "${USER_HOME}/.oh-my-zsh" ] && copy_files+=("${USER_HOME}/.oh-my-zsh")
+    if [ ${#copy_files[@]} -gt 0 ]; then
+        cp -rf "${copy_files[@]}" /root/
+    fi
 fi
 
 # Install Oh My Posh if requested
