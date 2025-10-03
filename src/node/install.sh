@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+# Save feature VERSION option before sourcing /etc/os-release
+NODE_VERSION=${VERSION:-"lts"}
+
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
 # Get an adjusted ID independent of distro variants
@@ -91,8 +94,7 @@ clean_up() {
     esac
 }
 
-# Import options
-VERSION=${VERSION:-"lts"}
+# Import options (NODE_VERSION already set before sourcing /etc/os-release)
 INSTALLLTS=${INSTALLLTS:-"true"}
 INSTALLYARN=${INSTALLYARN:-"true"}
 INSTALLPNPM=${INSTALLPNPM:-"true"}
@@ -178,11 +180,11 @@ if [ "${INSTALLLTS}" = "true" ]; then
 fi
 
 # Install specified version
-if [ "${VERSION}" != "none" ]; then
-    echo "Installing Node.js ${VERSION}..."
-    fnm install "${VERSION}"
-    fnm default "${VERSION}"
-    fnm use "${VERSION}"
+if [ "${NODE_VERSION}" != "none" ]; then
+    echo "Installing Node.js ${NODE_VERSION}..."
+    fnm install "${NODE_VERSION}"
+    fnm default "${NODE_VERSION}"
+    fnm use "${NODE_VERSION}"
 fi
 
 # Show installed versions
