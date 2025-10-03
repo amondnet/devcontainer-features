@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+# Save VERSION option before sourcing os-release
+DENO_VERSION=${VERSION:-"latest"}
+
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
 # Get an adjusted ID independent of distro variants
@@ -118,9 +121,6 @@ USER_HOME="/root"
 if [ "${USERNAME}" != "root" ]; then
     USER_HOME="/home/${USERNAME}"
 fi
-
-# Save VERSION before sourcing os-release
-DENO_VERSION=${VERSION:-"latest"}
 
 echo "Installing Deno..."
 echo "Installing for user: ${USERNAME}"
