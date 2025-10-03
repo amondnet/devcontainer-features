@@ -10,12 +10,9 @@ set -e
 source dev-container-features-test-lib
 
 # Setup environment
-export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:/home/linuxbrew/.linuxbrew/bin:$PATH"
+export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:$PATH"
 if command -v fnm &> /dev/null; then
     eval "$(fnm env 2>/dev/null)" || true
-fi
-if command -v brew &> /dev/null; then
-    eval "$(brew shellenv 2>/dev/null)" || true
 fi
 
 # Test shell utilities
@@ -29,8 +26,8 @@ check "npm installed" bash -c "command -v npm"
 check "yarn installed" bash -c "command -v yarn"
 check "pnpm installed" bash -c "command -v pnpm"
 
-# Test Homebrew
-check "brew installed" bash -c "command -v brew"
+# Test Graphite
+check "gt installed" bash -c "command -v gt"
 
 # Test modern runtimes
 check "bun installed" bash -c "command -v bun"

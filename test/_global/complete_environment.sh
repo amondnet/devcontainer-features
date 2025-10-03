@@ -12,20 +12,16 @@ source dev-container-features-test-lib
 echo "Testing complete development environment..."
 
 # Setup environment variables
-export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:$HOME/.pub-cache/bin:/home/linuxbrew/.linuxbrew/bin:$PATH"
+export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:$HOME/.pub-cache/bin:$PATH"
 if command -v fnm &> /dev/null; then
     eval "$(fnm env 2>/dev/null)" || true
-fi
-if command -v brew &> /dev/null; then
-    eval "$(brew shellenv 2>/dev/null)" || true
 fi
 
 # Shell utilities
 check "zsh installed" bash -c "zsh --version"
 check "oh-my-posh installed" bash -c "command -v oh-my-posh"
 
-# Package managers
-check "brew installed" bash -c "command -v brew"
+# Development tools
 check "graphite installed" bash -c "command -v gt"
 
 # Node.js ecosystem
@@ -53,7 +49,7 @@ fi
 check "node works" bash -c "node -e \"console.log('ok')\""
 check "bun works" bash -c "bun --version"
 check "deno works" bash -c "deno --version"
-check "brew works" bash -c "brew --version"
+check "gt works" bash -c "gt --version"
 
 # Report result
 reportResults

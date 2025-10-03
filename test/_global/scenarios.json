@@ -11,7 +11,7 @@
                 "installYarn": true,
                 "installPnpm": true
             },
-            "homebrew": {},
+            "graphite": {},
             "bun": {},
             "deno": {}
         }
@@ -48,13 +48,12 @@
                 "shellFramework": "zimfw",
                 "installOhMyPosh": true
             },
-            "homebrew": {},
-            "graphite": {},
             "node": {
                 "version": "22",
                 "installYarn": true,
                 "installPnpm": true
             },
+            "graphite": {},
             "bun": {},
             "deno": {},
             "sdkman": {},
