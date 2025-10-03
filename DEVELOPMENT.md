@@ -298,6 +298,8 @@ When creating a new feature:
 5. **Not cleaning up**: Always call clean_up() at the end to reduce image size
 6. **Missing dependencies**: Add all required packages (curl, ca-certificates, unzip, etc.)
 7. **Not handling /etc/skel**: Check /etc/skel for default config files first
+8. **Variable conflicts with /etc/os-release**: Save feature options BEFORE sourcing /etc/os-release (e.g., `NODE_VERSION=${VERSION:-"lts"}` before `. /etc/os-release`)
+9. **Duplicate installations**: Check if version options overlap (e.g., VERSION="lts" + INSTALLLTS="true")
 
 ## Useful Commands
 
