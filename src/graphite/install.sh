@@ -19,3 +19,5 @@ brew install withgraphite/tap/graphite
 
 echo "✅ Graphite CLI installed successfully!"
 gt --version
+
+echo "Done!"
