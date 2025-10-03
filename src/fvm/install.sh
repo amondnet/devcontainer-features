@@ -125,7 +125,7 @@ echo "Installing for user: ${USERNAME}"
 echo "Home directory: ${USER_HOME}"
 
 # Install required packages
-check_packages curl ca-certificates
+check_packages curl ca-certificates sudo
 
 # Install FVM as the target user
 if [ "${USERNAME}" = "root" ]; then
