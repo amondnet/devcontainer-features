@@ -24,11 +24,8 @@ Installs Node.js via fnm (Fast Node Manager) with yarn and pnpm support. Provide
 - Yarn and pnpm support
 - nvm alias for compatibility
 
-### homebrew
-Installs Homebrew package manager for Linux.
-
 ### graphite
-Installs Graphite CLI for stacked pull request workflows.
+Installs Graphite CLI for stacked pull request workflows via npm. Requires the `node` feature.
 
 ### bun
 Installs Bun - Fast JavaScript runtime and toolkit.
@@ -61,7 +58,6 @@ Installs FVM - Flutter Version Management.
       "installYarn": true,
       "installPnpm": true
     },
-    "ghcr.io/amondnet/devcontainer-features/homebrew:1": {},
     "ghcr.io/amondnet/devcontainer-features/graphite:1": {},
     "ghcr.io/amondnet/devcontainer-features/bun:1": {},
     "ghcr.io/amondnet/devcontainer-features/deno:1": {},
