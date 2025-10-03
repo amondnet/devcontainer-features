@@ -10,7 +10,8 @@ set -e
 source dev-container-features-test-lib
 
 # Feature-specific tests
-check "fvm installed" bash -c "test -f $HOME/.pub-cache/bin/fvm"
+check "fvm installed" bash -c "command -v fvm"
+check "fvm version" bash -c "fvm --version"
 
 # Report result
 reportResults
