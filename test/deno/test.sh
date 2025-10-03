@@ -9,6 +9,9 @@ set -e
 # shellcheck source=/dev/null
 source dev-container-features-test-lib
 
+# Setup environment
+export PATH="$HOME/.deno/bin:$PATH"
+
 # Feature-specific tests
 check "deno installed" bash -c "command -v deno"
 check "deno version" bash -c "deno --version"
