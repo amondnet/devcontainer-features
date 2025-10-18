@@ -4,9 +4,6 @@
   "name": "Flutter",
   "description": "Installs Flutter SDK for cross-platform app development with Dart (via FVM - Flutter Version Management)",
   "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/flutter",
-  "dependsOn": {
-    "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
-  },
   "options": {
     "version": {
       "type": "string",

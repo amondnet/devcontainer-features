@@ -2,14 +2,14 @@
   "id": "claude-code",
   "version": "1.0.0",
   "name": "Claude Code CLI",
-  "description": "Installs Claude Code CLI - Anthropic's AI-powered coding assistant for intelligent code generation, analysis, and refactoring (via Homebrew)",
+  "description": "Installs Claude Code CLI - Anthropic's AI-powered coding assistant for intelligent code generation, analysis, and refactoring",
   "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/claude-code",
   "options": {
     "version": {
       "type": "string",
-      "proposals": ["latest", "beta"],
-      "default": "latest",
-      "description": "Select Claude Code CLI version to install via Homebrew"
+      "proposals": ["stable", "latest", "1.0.58"],
+      "default": "stable",
+      "description": "Select Claude Code CLI version to install (stable, latest, or specific version like 1.0.58)"
     }
   },
   "customizations": {
@@ -25,8 +25,5 @@
         ]
       }
     }
-  },
-  "dependsOn": {
-    "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
   }
 }

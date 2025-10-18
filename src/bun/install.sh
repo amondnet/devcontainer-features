@@ -1,100 +1,110 @@
 #!/usr/bin/env bash
 set -e
 
+# Save VERSION option before sourcing os-release
+BUN_VERSION=${VERSION:-"latest"}
+
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
 
-BUN_VERSION=${VERSION:-"latest"}
-
-# Determine the appropriate non-root user
-USERNAME="${USERNAME:-"automatic"}"
-if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
-    USERNAME=""
-    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
-        if id -u ${CURRENT_USER} > /dev/null 2>&1; then
-            USERNAME=${CURRENT_USER}
-            break
-        fi
-    done
-    if [ "${USERNAME}" = "" ]; then
-        USERNAME=root
-    fi
-elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
-    USERNAME=root
+# Get an adjusted ID independent of distro variants
+ADJUSTED_ID="${ID}"
+if [ "${ID}" = "debian" ] || [ "${ID_LIKE#*debian*}" != "${ID_LIKE}" ]; then
+    ADJUSTED_ID="debian"
+elif [ "${ID}" = "rhel" ] || [ "${ID}" = "fedora" ] || [ "${ID}" = "mariner" ] || [ "${ID_LIKE#*rhel*}" != "${ID_LIKE}" ] || [ "${ID_LIKE#*fedora*}" != "${ID_LIKE}" ] || [ "${ID_LIKE#*mariner*}" != "${ID_LIKE}" ]; then
+    ADJUSTED_ID="rhel"
 fi
 
-echo "Installing Bun via Homebrew..."
+# Setup package manager commands
+if type apt-get > /dev/null 2>&1; then
+    PKG_MGR_CMD=apt-get
+    INSTALL_CMD="${PKG_MGR_CMD} -y install --no-install-recommends"
+elif type microdnf > /dev/null 2>&1; then
+    PKG_MGR_CMD=microdnf
+    INSTALL_CMD="${PKG_MGR_CMD} -y install --refresh --best --nodocs --noplugins --setopt=install_weak_deps=0"
+elif type dnf > /dev/null 2>&1; then
+    PKG_MGR_CMD=dnf
+    INSTALL_CMD="${PKG_MGR_CMD} -y install"
+elif type yum > /dev/null 2>&1; then
+    PKG_MGR_CMD=yum
+    INSTALL_CMD="${PKG_MGR_CMD} -y install"
+fi
+
+pkg_mgr_update() {
+    case ${ADJUSTED_ID} in
+        debian)
+            if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
+                ${PKG_MGR_CMD} update -y
+            fi
+            ;;
+        rhel)
+            if [ ${PKG_MGR_CMD} = "microdnf" ]; then
+                if [ "$(ls /var/cache/yum/* 2>/dev/null | wc -l)" = 0 ]; then
+                    ${PKG_MGR_CMD} makecache
+                fi
+            else
+                if [ "$(ls /var/cache/${PKG_MGR_CMD}/* 2>/dev/null | wc -l)" = 0 ]; then
+                    ${PKG_MGR_CMD} check-update || true
+                fi
+            fi
+            ;;
+    esac
+}
+
+check_packages() {
+    case ${ADJUSTED_ID} in
+        debian)
+            if ! dpkg -s "$@" > /dev/null 2>&1; then
+                pkg_mgr_update
+                ${INSTALL_CMD} "$@"
+            fi
+            ;;
+        rhel)
+            if ! rpm -q "$@" > /dev/null 2>&1; then
+                pkg_mgr_update
+                ${INSTALL_CMD} "$@"
+            fi
+            ;;
+    esac
+}
+
+clean_up() {
+    case ${ADJUSTED_ID} in
+        debian)
+            rm -rf /var/lib/apt/lists/*
+            ;;
+        rhel)
+            rm -rf /var/cache/dnf/* /var/cache/yum/*
+            ;;
+    esac
+}
+
+echo "Installing Bun..."
 echo "Bun version: ${BUN_VERSION}"
 
-# Check for Homebrew
-if ! command -v brew &> /dev/null; then
-    echo "❌ Homebrew is required but not found."
-    echo "Please install the 'homebrew' feature before installing bun."
-    exit 1
-fi
+# Install required packages
+check_packages curl ca-certificates unzip
 
-echo "Homebrew found: $(brew --version | head -n 1)"
-
-# Install Bun via Homebrew
-echo "Installing bun via homebrew..."
-if [ "${USERNAME}" = "root" ]; then
-    # If we must run as root, use HOMEBREW_FORCE_BREWED_CURL
-    export HOMEBREW_NO_AUTO_UPDATE=1
-    export NONINTERACTIVE=1
-    if [ "${BUN_VERSION}" = "latest" ] || [ "${BUN_VERSION}" = "none" ]; then
-        HOMEBREW_FORCE_BREWED_CURL=1 brew install bun || {
-            echo "Warning: brew install failed as root, trying with su..."
-            # Create a temporary user if needed
-            if ! id -u linuxbrew > /dev/null 2>&1; then
-                useradd -m -s /bin/bash linuxbrew
-            fi
-            chown -R linuxbrew:linuxbrew /home/linuxbrew/.linuxbrew
-            mkdir -p /home/linuxbrew/.cache
-            chown -R linuxbrew:linuxbrew /home/linuxbrew/.cache
-            su - linuxbrew << 'EOF'
-export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
-export HOMEBREW_NO_AUTO_UPDATE=1
-brew install bun
-EOF
-        }
-    else
-        HOMEBREW_FORCE_BREWED_CURL=1 brew install bun@${BUN_VERSION} || {
-            echo "Warning: brew install failed as root, trying with su..."
-            if ! id -u linuxbrew > /dev/null 2>&1; then
-                useradd -m -s /bin/bash linuxbrew
-            fi
-            chown -R linuxbrew:linuxbrew /home/linuxbrew/.linuxbrew
-            mkdir -p /home/linuxbrew/.cache
-            chown -R linuxbrew:linuxbrew /home/linuxbrew/.cache
-            su - linuxbrew << EOF
-export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:\$PATH"
-export HOMEBREW_NO_AUTO_UPDATE=1
-brew install bun@${BUN_VERSION}
-EOF
-        }
-    fi
+# Install Bun via official install script
+export BUN_INSTALL="/usr/local"
+if [ "${BUN_VERSION}" = "latest" ]; then
+    curl -fsSL https://bun.sh/install | bash
 else
-    # Run as non-root user
-    export HOMEBREW_NO_AUTO_UPDATE=1
-    if [ "${BUN_VERSION}" = "latest" ] || [ "${BUN_VERSION}" = "none" ]; then
-        su - ${USERNAME} << 'EOF'
-export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
-export HOMEBREW_NO_AUTO_UPDATE=1
-brew install bun
-EOF
-    else
-        su - ${USERNAME} << EOF
-export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:\$PATH"
-export HOMEBREW_NO_AUTO_UPDATE=1
-brew install bun@${BUN_VERSION}
-EOF
-    fi
+    # For specific versions, pass to install script
+    curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
 fi
 
 # Verify installation
+if ! command -v bun > /dev/null 2>&1; then
+    echo "ERROR: Bun installation failed - bun command not found in PATH"
+    exit 1
+fi
+
 echo "✅ Bun installed successfully!"
 echo "Bun version:"
 bun --version
+
+# Clean up
+clean_up
 
 echo "Done!"

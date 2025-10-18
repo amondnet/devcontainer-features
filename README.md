@@ -28,16 +28,16 @@ Installs Node.js via fnm (Fast Node Manager) with yarn and pnpm support. Provide
 Installs Graphite CLI for stacked pull request workflows via npm. Requires the `node` feature.
 
 ### bun
-Installs Bun - Fast JavaScript runtime and toolkit.
+Installs Bun - Fast all-in-one JavaScript runtime with built-in bundler, transpiler, test runner, and package manager.
 
 ### deno
 Installs Deno - Secure TypeScript/JavaScript runtime.
 
 ### claude-code
-Installs Claude Code - AI-powered coding assistant CLI.
+Installs Claude Code - Anthropic's AI-powered coding assistant CLI for intelligent code generation and analysis.
 
 ### flutter
-Installs Flutter with FVM (Flutter Version Manager) for version management.
+Installs Flutter SDK with FVM (Flutter Version Manager) for cross-platform app development with Dart.
 
 ## Usage
 

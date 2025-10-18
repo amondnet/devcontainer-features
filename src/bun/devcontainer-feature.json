@@ -2,19 +2,19 @@
   "id": "bun",
   "version": "1.0.0",
   "name": "Bun",
-  "description": "Installs Bun - Fast all-in-one JavaScript runtime with built-in bundler, transpiler, test runner, and package manager (via Homebrew)",
+  "description": "Installs Bun - Fast all-in-one JavaScript runtime with built-in bundler, transpiler, test runner, and package manager",
   "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/bun",
   "options": {
     "version": {
       "type": "string",
-      "proposals": ["latest", "none", "1.1", "1.0"],
+      "proposals": ["latest", "canary", "1.1", "1.0"],
       "default": "latest",
-      "description": "Select or enter a Bun version to install via Homebrew"
+      "description": "Select or enter a Bun version to install (e.g., latest, canary, 1.1.0, bun-v1.0.0)"
     }
   },
   "containerEnv": {
-    "BUN_INSTALL": "/home/linuxbrew/.linuxbrew",
-    "PATH": "/home/linuxbrew/.linuxbrew/bin:${PATH}"
+    "BUN_INSTALL": "/usr/local",
+    "PATH": "/usr/local/bin:${PATH}"
   },
   "customizations": {
     "vscode": {
@@ -29,8 +29,5 @@
         ]
       }
     }
-  },
-  "dependsOn": {
-    "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
   }
 }
