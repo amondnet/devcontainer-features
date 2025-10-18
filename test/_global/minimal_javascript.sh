@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This test verifies a full-stack development environment setup
-# with shell utilities, Node.js ecosystem, and modern runtimes
+# This test verifies a minimal JavaScript development environment
+# with shell utilities, Node.js 20 (no yarn/pnpm), and Bun
 
 set -e
 
@@ -11,35 +11,27 @@ source dev-container-features-test-lib
 
 # Setup environment
 export FNM_DIR="/usr/local/share/fnm"
-export DENO_INSTALL="/usr/local/deno"
-export PATH="$FNM_DIR:$HOME/.local/bin:$DENO_INSTALL/bin:$PATH"
-# Bun is installed via Homebrew and is already in PATH via /home/linuxbrew/.linuxbrew/bin
+export PATH="$FNM_DIR:$HOME/.local/bin:$HOME/.bun/bin:$PATH"
 if command -v fnm &> /dev/null; then
     eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR 2>/dev/null)" || true
 fi
 
 # Test shell utilities
 check "zsh installed" bash -c "zsh --version"
-check "oh-my-posh installed" bash -c "command -v oh-my-posh"
 
-# Test Node.js ecosystem
+# Test Node.js (version 20, without yarn and pnpm)
 check "fnm installed" bash -c "command -v fnm"
 check "node installed" bash -c "command -v node"
 check "npm installed" bash -c "command -v npm"
-check "yarn installed" bash -c "command -v yarn"
-check "pnpm installed" bash -c "command -v pnpm"
+check "yarn not installed" bash -c "! command -v yarn"
+check "pnpm not installed" bash -c "! command -v pnpm"
 
-# Test Graphite
-check "gt installed" bash -c "command -v gt"
-
-# Test modern runtimes
+# Test Bun
 check "bun installed" bash -c "command -v bun"
-check "deno installed" bash -c "command -v deno"
 
-# Verify integrations work
+# Verify execution
 check "node execution" bash -c "node -e \"console.log('Node.js works')\""
 check "bun execution" bash -c "bun --version"
-check "deno execution" bash -c "deno eval \"console.log('Deno works')\""
 
 # Report result
 reportResults

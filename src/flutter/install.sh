@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -e
 
+# Save VERSION option before sourcing os-release
+FLUTTER_VERSION=${VERSION:-"stable"}
+export FVM_HOME="/usr/local/share/fvm"
+
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
+
 # Get an adjusted ID independent of distro variants
 ADJUSTED_ID="${ID}"
 if [ "${ID}" = "debian" ] || [ "${ID_LIKE#*debian*}" != "${ID_LIKE}" ]; then
@@ -91,100 +96,40 @@ clean_up() {
     esac
 }
 
-
-# Determine the appropriate non-root user
-if [ "${_REMOTE_USER}" != "root" ]; then
-    USERNAME="${_REMOTE_USER}"
-else
-    USERNAME="${USERNAME:-"automatic"}"
-fi
-
-if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
-    USERNAME=""
-    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
-        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
-            USERNAME=${CURRENT_USER}
-            break
-        fi
-    done
-    if [ "${USERNAME}" = "" ]; then
-        USERNAME=root
-    fi
-elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
-    USERNAME=root
-fi
-
-USER_HOME="/root"
-if [ "${USERNAME}" != "root" ]; then
-    USER_HOME="/home/${USERNAME}"
-fi
-
-echo "Installing FVM..."
-echo "Installing for user: ${USERNAME}"
-echo "Home directory: ${USER_HOME}"
+echo "Installing Flutter via FVM..."
+echo "Flutter channel: ${FLUTTER_VERSION}"
+echo "FVM home: ${FVM_HOME}"
 
 # Install required packages
-check_packages curl ca-certificates sudo
+check_packages curl ca-certificates git unzip xz-utils
 
-# Configure passwordless sudo for non-root user
-if [ "${USERNAME}" != "root" ]; then
-    echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME}
-    chmod 0440 /etc/sudoers.d/${USERNAME}
-fi
+# Create FVM directory
+mkdir -p "${FVM_HOME}"
 
-# Install FVM as the target user
-if [ "${USERNAME}" = "root" ]; then
-    # When running as root, install directly without su
-    export FVM_ALLOW_ROOT=true
-    curl -fsSL https://fvm.app/install.sh | bash
-else
-    # For non-root users, use su
-    su - ${USERNAME} << 'EOF'
+# Install FVM to system-wide location
+echo "Installing FVM..."
 export FVM_ALLOW_ROOT=true
-curl -fsSL https://fvm.app/install.sh | bash
-EOF
-fi
+curl -fsSL https://fvm.app/install.sh | bash -s -- --install-dir "${FVM_HOME}" || true
 
-# Add to shell configs for the target user
-if [ -f "${USER_HOME}/.zshrc" ]; then
-    grep -qxF 'export PATH="$HOME/.pub-cache/bin:$PATH"' "${USER_HOME}/.zshrc" || \
-        echo 'export PATH="$HOME/.pub-cache/bin:$PATH"' >> "${USER_HOME}/.zshrc"
-fi
+# Make FVM accessible in PATH
+ln -sf "${FVM_HOME}/fvm" /usr/local/bin/fvm || true
 
-if [ -f "${USER_HOME}/.bashrc" ]; then
-    grep -qxF 'export PATH="$HOME/.pub-cache/bin:$PATH"' "${USER_HOME}/.bashrc" || \
-        echo 'export PATH="$HOME/.pub-cache/bin:$PATH"' >> "${USER_HOME}/.bashrc"
-fi
+# Setup FVM environment
+export PATH="${FVM_HOME}:$PATH"
 
-# Copy .pub-cache to root user if installing for non-root
-if [ "${USERNAME}" != "root" ]; then
-    if [ -d "${USER_HOME}/.pub-cache" ]; then
-        cp -rf "${USER_HOME}/.pub-cache" /root/
-    fi
+# Install Flutter version
+echo "Installing Flutter ${FLUTTER_VERSION}..."
+"${FVM_HOME}/fvm" install "${FLUTTER_VERSION}" || true
 
-    # Also add to root's shell configs
-    if [ -f "/root/.bashrc" ]; then
-        grep -qxF 'export PATH="$HOME/.pub-cache/bin:$PATH"' "/root/.bashrc" || \
-            echo 'export PATH="$HOME/.pub-cache/bin:$PATH"' >> /root/.bashrc
-    fi
-fi
+# Set global Flutter version
+echo "Setting global Flutter version to ${FLUTTER_VERSION}..."
+"${FVM_HOME}/fvm" global "${FLUTTER_VERSION}" || true
 
-echo "✅ FVM installed successfully!"
-if [ "${USERNAME}" = "root" ]; then
-    # When root, run directly
-    export PATH="$HOME/.pub-cache/bin:$PATH"
-    if command -v fvm &> /dev/null; then
-        fvm --version
-    fi
-else
-    # For non-root users, use su
-    su - ${USERNAME} << 'EOF'
-export PATH="$HOME/.pub-cache/bin:$PATH"
-if command -v fvm &> /dev/null; then
-    fvm --version
-fi
-EOF
+# Verify installation
+echo "✅ Flutter installed successfully!"
+if [ -f "${FVM_HOME}/default/bin/flutter" ]; then
+    echo "Flutter version:"
+    "${FVM_HOME}/default/bin/flutter" --version || true
 fi
 
 # Clean up

@@ -3,6 +3,7 @@ set -e
 
 # Save VERSION option before sourcing os-release
 DENO_VERSION=${VERSION:-"latest"}
+export DENO_INSTALL="/usr/local/deno"
 
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
@@ -94,86 +95,30 @@ clean_up() {
     esac
 }
 
-# Determine the appropriate non-root user
-if [ "${_REMOTE_USER}" != "root" ]; then
-    USERNAME="${_REMOTE_USER}"
-else
-    USERNAME="${USERNAME:-"automatic"}"
-fi
-
-if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
-    USERNAME=""
-    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
-    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
-        if id -u "${CURRENT_USER}" > /dev/null 2>&1; then
-            USERNAME=${CURRENT_USER}
-            break
-        fi
-    done
-    if [ "${USERNAME}" = "" ]; then
-        USERNAME=root
-    fi
-elif [ "${USERNAME}" = "none" ] || ! id -u "${USERNAME}" > /dev/null 2>&1; then
-    USERNAME=root
-fi
-
-USER_HOME="/root"
-if [ "${USERNAME}" != "root" ]; then
-    USER_HOME="/home/${USERNAME}"
-fi
-
 echo "Installing Deno..."
-echo "Installing for user: ${USERNAME}"
-echo "Home directory: ${USER_HOME}"
+echo "Deno version: ${DENO_VERSION}"
+echo "Install path: ${DENO_INSTALL}"
 
 # Install required packages
 check_packages curl ca-certificates unzip
 
-# Install Deno as the target user
-if [ "${DENO_VERSION}" = "latest" ]; then
-    su - ${USERNAME} << 'EOF'
-curl -fsSL https://deno.land/install.sh | sh
-EOF
+# Create install directory
+mkdir -p "${DENO_INSTALL}"
+
+# Install Deno to system-wide location
+if [ "${DENO_VERSION}" = "latest" ] || [ "${DENO_VERSION}" = "none" ]; then
+    curl -fsSL https://deno.land/install.sh | sh
 else
-    su - ${USERNAME} bash -c "curl -fsSL https://deno.land/install.sh | sh -s v${DENO_VERSION}"
+    curl -fsSL https://deno.land/install.sh | sh -s "v${DENO_VERSION}"
 fi
 
-# Add to shell configs for the target user
-if [ -f "${USER_HOME}/.zshrc" ]; then
-    if ! grep -qF 'export DENO_INSTALL="$HOME/.deno"' "${USER_HOME}/.zshrc"; then
-        echo 'export DENO_INSTALL="$HOME/.deno"' >> "${USER_HOME}/.zshrc"
-        echo 'export PATH="$DENO_INSTALL/bin:$PATH"' >> "${USER_HOME}/.zshrc"
-    fi
-fi
+# Create symlink for easier access
+ln -sf "${DENO_INSTALL}/bin/deno" /usr/local/bin/deno
 
-if [ -f "${USER_HOME}/.bashrc" ]; then
-    if ! grep -qF 'export DENO_INSTALL="$HOME/.deno"' "${USER_HOME}/.bashrc"; then
-        echo 'export DENO_INSTALL="$HOME/.deno"' >> "${USER_HOME}/.bashrc"
-        echo 'export PATH="$DENO_INSTALL/bin:$PATH"' >> "${USER_HOME}/.bashrc"
-    fi
-fi
-
-# Copy deno installation to root user if installing for non-root
-if [ "${USERNAME}" != "root" ]; then
-    if [ -d "${USER_HOME}/.deno" ]; then
-        cp -rf "${USER_HOME}/.deno" /root/
-    fi
-
-    # Also add to root's shell configs
-    if [ -f "/root/.bashrc" ]; then
-        if ! grep -qF 'export DENO_INSTALL="$HOME/.deno"' "/root/.bashrc"; then
-            echo 'export DENO_INSTALL="$HOME/.deno"' >> /root/.bashrc
-            echo 'export PATH="$DENO_INSTALL/bin:$PATH"' >> /root/.bashrc
-        fi
-    fi
-fi
-
+# Verify installation
 echo "✅ Deno installed successfully!"
-su - ${USERNAME} << 'EOF'
-export DENO_INSTALL="$HOME/.deno"
-export PATH="$DENO_INSTALL/bin:$PATH"
-deno --version
-EOF
+echo "Deno version:"
+"${DENO_INSTALL}/bin/deno" --version
 
 # Clean up
 clean_up

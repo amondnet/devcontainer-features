@@ -9,12 +9,16 @@ set -e
 # shellcheck source=/dev/null
 source dev-container-features-test-lib
 
-# Setup environment
-export PATH="$HOME/.deno/bin:$PATH"
+# Setup environment for system-wide Deno
+export DENO_INSTALL="/usr/local/deno"
+export PATH="$DENO_INSTALL/bin:$PATH"
 
 # Feature-specific tests
 check "deno installed" bash -c "command -v deno"
 check "deno version" bash -c "deno --version"
+
+# Test deno execution
+check "deno works" bash -c "deno eval \"console.log('Hello from Deno')\""
 
 # Report result
 reportResults

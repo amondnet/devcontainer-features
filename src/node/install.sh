@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-# Save feature VERSION option before sourcing /etc/os-release
+# Save feature options before sourcing /etc/os-release
 NODE_VERSION=${VERSION:-"lts"}
+export FNM_DIR=${FNMINSTALLPATH:-"/usr/local/share/fnm"}
 
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
@@ -134,44 +135,83 @@ fi
 
 echo "Installing for user: ${USERNAME}"
 echo "Home directory: ${USER_HOME}"
+echo "FNM directory: ${FNM_DIR}"
 
-# Install fnm as the target user
-su - ${USERNAME} << 'EOF'
-set -e
+# Install fnm to system-wide location
+echo "Installing fnm to ${FNM_DIR}..."
+mkdir -p "${FNM_DIR}"
+curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir "${FNM_DIR}" --skip-shell
 
-echo "Installing fnm..."
-curl -fsSL https://fnm.vercel.app/install | bash
+# Make fnm accessible system-wide
+ln -sf "${FNM_DIR}/fnm" /usr/local/bin/fnm
 
-# Setup fnm environment
-export PATH="$HOME/.local/share/fnm:$PATH"
-eval "$(fnm env --use-on-cd)"
+# Setup fnm environment for all users
+export PATH="${FNM_DIR}:$PATH"
+eval "$(fnm env --use-on-cd --fnm-dir ${FNM_DIR})"
 
+# Add fnm to system-wide shell config
+fnm_rc_snippet="$(cat << 'EOF'
+
+# fnm (Fast Node Manager)
+export FNM_DIR="/usr/local/share/fnm"
+export PATH="$FNM_DIR:$PATH"
+eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
 EOF
+)"
 
-# Add fnm to shell configs
+# Add to /etc/bash.bashrc for all bash users
+if [ -f "/etc/bash.bashrc" ]; then
+    echo "${fnm_rc_snippet}" >> /etc/bash.bashrc
+fi
+
+# Add to /etc/zsh/zshrc for all zsh users
+if [ -f "/etc/zsh/zshrc" ]; then
+    echo "${fnm_rc_snippet}" >> /etc/zsh/zshrc
+fi
+
+# Also add to target user's configs for immediate use
 cat >> "${USER_HOME}/.bashrc" << 'BASHRC_EOF'
 
 # fnm (Fast Node Manager)
-export PATH="$HOME/.local/share/fnm:$PATH"
-eval "$(fnm env --use-on-cd)"
+export FNM_DIR="/usr/local/share/fnm"
+export PATH="$FNM_DIR:$PATH"
+eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
 BASHRC_EOF
 
 if [ -f "${USER_HOME}/.zshrc" ]; then
     cat >> "${USER_HOME}/.zshrc" << 'ZSHRC_EOF'
 
 # fnm (Fast Node Manager)
-export PATH="$HOME/.local/share/fnm:$PATH"
-eval "$(fnm env --use-on-cd)"
+export FNM_DIR="/usr/local/share/fnm"
+export PATH="$FNM_DIR:$PATH"
+eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
 ZSHRC_EOF
 fi
 
-# Install Node.js versions as the target user
-su - ${USERNAME} << EOF
-set -e
+# Also add to root's configs if installing for non-root user
+if [ "${USERNAME}" != "root" ]; then
+    mkdir -p /root
+    cat >> /root/.bashrc << 'ROOT_BASHRC_EOF'
 
-# Setup fnm environment
-export PATH="\$HOME/.local/share/fnm:\$PATH"
-eval "\$(fnm env --use-on-cd)"
+# fnm (Fast Node Manager)
+export FNM_DIR="/usr/local/share/fnm"
+export PATH="$FNM_DIR:$PATH"
+eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
+ROOT_BASHRC_EOF
+
+    if [ -f /root/.zshrc ] || command -v zsh > /dev/null 2>&1; then
+        cat >> /root/.zshrc << 'ROOT_ZSHRC_EOF'
+
+# fnm (Fast Node Manager)
+export FNM_DIR="/usr/local/share/fnm"
+export PATH="$FNM_DIR:$PATH"
+eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
+ROOT_ZSHRC_EOF
+    fi
+fi
+
+# Install Node.js versions using system-wide fnm
+echo "Installing Node.js versions..."
 
 # Install Node.js versions
 if [ "${NODE_VERSION}" = "lts" ] || [ "${NODE_VERSION}" = "none" ]; then
@@ -180,9 +220,9 @@ if [ "${NODE_VERSION}" = "lts" ] || [ "${NODE_VERSION}" = "none" ]; then
         echo "Installing Node.js LTS..."
         fnm install --lts
         # Get the actual LTS version that was installed
-        INSTALLED_LTS=\$(fnm list | grep -oP 'v\d+\.\d+\.\d+' | head -n1 | sed 's/^v//')
-        if [ -n "\$INSTALLED_LTS" ]; then
-            fnm default "\$INSTALLED_LTS"
+        INSTALLED_LTS=$(fnm list | grep -oP 'v\d+\.\d+\.\d+' | head -n1 | sed 's/^v//')
+        if [ -n "$INSTALLED_LTS" ]; then
+            fnm default "$INSTALLED_LTS"
         fi
     fi
 else
@@ -208,32 +248,22 @@ fnm exec --using=default node --version
 echo "npm version:"
 fnm exec --using=default npm --version
 
-EOF
-
 # Install Yarn if requested
 if [ "${INSTALLYARN}" = "true" ]; then
     echo "Installing Yarn..."
-    su - ${USERNAME} << 'EOF'
-    export PATH="$HOME/.local/share/fnm:$PATH"
-    eval "$(fnm env --use-on-cd)"
     fnm exec --using=default npm install -g yarn
-    fnm exec --using=default yarn --version
-EOF
+    echo "Yarn version: $(fnm exec --using=default yarn --version)"
 fi
 
 # Install pnpm if requested
-if [ "${INSTALLPNPM}" = "true" ]; then
+if [ "${INSTALLPNPM}" = "true" ] && [ "${PNPMVERSION}" != "none" ]; then
     echo "Installing pnpm ${PNPMVERSION}..."
-    su - ${USERNAME} << EOF
-    export PATH="\$HOME/.local/share/fnm:\$PATH"
-    eval "\$(fnm env --use-on-cd)"
     if [ "${PNPMVERSION}" = "latest" ]; then
         fnm exec --using=default npm install -g pnpm
     else
         fnm exec --using=default npm install -g pnpm@${PNPMVERSION}
     fi
-    fnm exec --using=default pnpm --version
-EOF
+    echo "pnpm version: $(fnm exec --using=default pnpm --version)"
 fi
 
 # Add nvm alias for compatibility if requested
@@ -248,8 +278,7 @@ fi
 echo "=========================================="
 echo "✅ Node.js installation completed!"
 echo "=========================================="
-su - ${USERNAME} << 'EOF'
-export PATH="$HOME/.local/share/fnm:$PATH"
+echo "fnm: $(fnm --version)"
 echo "Node.js: $(fnm exec --using=default node --version)"
 echo "npm: $(fnm exec --using=default npm --version)"
 if fnm exec --using=default yarn --version &> /dev/null; then
@@ -258,7 +287,6 @@ fi
 if fnm exec --using=default pnpm --version &> /dev/null; then
     echo "pnpm: $(fnm exec --using=default pnpm --version)"
 fi
-EOF
 
 # Clean up
 clean_up

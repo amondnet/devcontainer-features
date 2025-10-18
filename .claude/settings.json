@@ -5,7 +5,8 @@
       "Bash(gh api repos:*)",
       "Bash(xargs curl -s)",
       "WebSearch",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch"
     ],
     "deny": [],
     "ask": []

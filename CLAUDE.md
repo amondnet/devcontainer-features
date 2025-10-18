@@ -6,17 +6,17 @@ This file provides guidance to Claude Code when working with devcontainer featur
 
 This repository contains custom devcontainer features for development environments. Features are modular, reusable installation units that can be composed in `devcontainer.json`.
 
+**Note**: `shell-utils` provides the same functionality as the official `common-utils` feature, offering a complete shell setup with Zsh and Oh My Zsh.
+
 ### Available Features
 
 1. **shell-utils** - Zsh with Zimfw/Oh My Zsh + Oh My Posh
-2. **node** - Node.js via fnm (Fast Node Manager)
-3. **homebrew** - Homebrew package manager
-4. **graphite** - Graphite CLI for stacked PRs
-5. **bun** - Bun JavaScript runtime
-6. **deno** - Deno runtime
-7. **sdkman** - SDKMAN for Java/JVM tools
-8. **claude-code** - Claude Code CLI
-9. **fvm** - Flutter Version Management
+2. **node** - Node.js via fnm (Fast Node Manager, system-wide at `/usr/local/share/fnm`)
+3. **deno** - Deno runtime (system-wide at `/usr/local/deno`)
+4. **flutter** - Flutter (via FVM, system-wide at `/usr/local/share/fvm`)
+5. **bun** - Bun JavaScript runtime (via Homebrew, requires homebrew feature)
+6. **graphite** - Graphite CLI for stacked PRs (requires homebrew feature)
+7. **claude-code** - Claude Code CLI (via Homebrew, requires homebrew feature)
 
 ## Architecture
 
@@ -45,14 +45,21 @@ clean_up  # Removes package manager caches at end
 
 These functions handle both Debian (apt) and RHEL (dnf/yum) systems automatically.
 
-### 2. User Context (CRITICAL for Tests)
+### 2. Installation Paths (System-wide vs User)
 
-Features install for a detected user (usually `ubuntu`, `vscode`, `coder`) but tests run as `root`.
+**Preferred: System-wide Installation** (no root copy needed)
+- Install to `/usr/local/` paths (e.g., `/usr/local/deno`, `/usr/local/share/fnm`)
+- Works automatically for both root and non-root users
+- Example: node, deno features
+- Environment: Set `containerEnv` in `devcontainer-feature.json`
 
-**Must copy configs to root after installation**:
+**Alternative: User-specific Installation** (copy to root for tests)
+- Install to user home (`$HOME/.config`, `$HOME/.local`)
+- Tests run as root, so must copy configs to `/root/`
+- Example: shell-utils, fvm, claude-code features
 
 ```bash
-# After installing for non-root user
+# For user-specific installs, copy to root after installation
 if [ "${USERNAME}" != "root" ]; then
     copy_files=()
     [ -f "${USER_HOME}/.zshrc" ] && copy_files+=("${USER_HOME}/.zshrc")
@@ -63,8 +70,6 @@ if [ "${USERNAME}" != "root" ]; then
 fi
 ```
 
-**Why**: Tests check `$HOME/.config` which is `/root/.config` when test runs as root, but installation creates `/home/ubuntu/.config`.
-
 ### 3. Shell Config Files
 
 1. Check `/etc/skel` first (may have defaults)
@@ -72,15 +77,62 @@ fi
 3. Add PATH exports with `grep -qxF` to avoid duplicates
 4. **Copy to root for non-root installs**
 
-### 4. Installation with su
+### 3. Dependencies (dependsOn)
 
-Always use `su - ${USERNAME}` to run in target user's environment:
+Some features require other features to be installed first:
 
-```bash
-su - ${USERNAME} << 'EOF'
-curl -fsSL https://install.sh | bash || true
-EOF
+```json
+{
+  "dependsOn": {
+    "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
+  }
+}
 ```
+
+**Features with dependencies:**
+- **bun** - Requires homebrew
+- **graphite** - Requires homebrew
+
+### 4. Environment Variables (containerEnv)
+
+Set environment variables in `devcontainer-feature.json` for system-wide installations:
+
+```json
+{
+  "containerEnv": {
+    "DENO_INSTALL": "/usr/local/deno",
+    "PATH": "/usr/local/deno/bin:${PATH}"
+  }
+}
+```
+
+### 5. VS Code Customizations
+
+All features include VS Code customizations for better developer experience:
+
+```json
+{
+  "customizations": {
+    "vscode": {
+      "extensions": ["relevant-extensions-for-this-tool"],
+      "settings": {
+        "language-specific-settings": "values"
+      }
+    }
+  }
+}
+```
+
+**What features provide**:
+- **shell-utils** - Remote Explorer, GitLens, Zsh terminal integration
+- **node** - ESLint extension for JavaScript linting
+- **deno** - Deno extension with linting and formatting
+- **bun** - Bun VS Code extension
+- **flutter** - Dart-Code extensions for Dart/Flutter development
+- **graphite** - Git integration via Copilot instructions
+- **claude-code** - Anthropic Claude Code extension
+
+All features include GitHub Copilot chat code generation instructions for context-aware AI assistance.
 
 ## Common Commands
 
@@ -112,23 +164,70 @@ git commit -m "feat: ..."
 git push
 ```
 
+## Installation Patterns by Feature
+
+### System-wide Installations (Preferred)
+
+**Pattern**: Install to `/usr/local/` with `containerEnv`
+
+Features:
+- **node** - `/usr/local/share/fnm`
+- **deno** - `/usr/local/deno`
+- **flutter** - `/usr/local/share/fvm`
+
+Benefits:
+- No user copying needed
+- Works for all users automatically
+- Clean test execution
+- Automatic updates with `containerEnv`
+
+### Package Manager Installations
+
+**Pattern**: Use Homebrew via `dependsOn`
+
+Features:
+- **bun** - `brew install bun`
+- **graphite** - `brew install withgraphite/tap/graphite`
+- **claude-code** - `brew install --cask claude-code`
+
+**Key Pattern**: These features declare `dependsOn` on the Homebrew feature, which ensures:
+- Automatic installation order (Homebrew first)
+- Simplified install scripts (just call brew commands)
+- Consistent package management
+- Automatic system-wide PATH in `/home/linuxbrew/.linuxbrew/bin`
+
+Benefits:
+- Automatic dependency resolution (via `dependsOn`)
+- Simple install scripts
+- Package manager handles updates and versioning
+- Works seamlessly across all users in container
+
+### User-specific Installations
+
+**Pattern**: Install to home directory, copy to root
+
+Features:
+- **shell-utils** - `~/.zshrc`, `~/.zim`, `~/.oh-my-zsh` (replaces common-utils)
+
+Note: Tests run as root, so configs are copied to `/root/` for test execution.
+
 ## Common Issues and Solutions
 
-### Issue: Test fails with "config file not found"
-**Cause**: Config created for ubuntu user but test runs as root
-**Solution**: Copy configs to root after installation (see User Context pattern)
-
 ### Issue: "command not found" in tests
-**Cause**: PATH not set for root user
-**Solution**: Add PATH exports to both user and root shell configs
+**Cause**: System-wide tools not in PATH for root
+**Solution**: Set `containerEnv.PATH` in `devcontainer-feature.json`
+
+### Issue: Test fails with user-specific tools
+**Cause**: Configs/binaries only in user home, not root home
+**Solution**: Copy to root after installation, or use system-wide path
 
 ### Issue: Package installation fails
 **Cause**: Missing dependencies or wrong package manager
 **Solution**: Use `check_packages` instead of raw apt-get/dnf
 
-### Issue: Feature works in container but test fails
-**Cause**: User context mismatch
-**Solution**: Always copy configs to root for non-root installs
+### Issue: Feature dependency not installed
+**Cause**: Missing `dependsOn` declaration
+**Solution**: Add proper feature dependency in `devcontainer-feature.json`
 
 ## Important Files
 
@@ -164,10 +263,12 @@ git push
 
 ### Critical Reminders:
 
-- ⚠️ **Never skip copying configs to root** for non-root installs
+- ⚠️ **Prefer system-wide installations** to `/usr/local/` when possible
+- ⚠️ **Use `dependsOn`** for feature dependencies (bun, graphite)
+- ⚠️ **Set `containerEnv`** for system-wide installations
+- ⚠️ **Copy configs to root** for user-specific installations
 - ⚠️ **Always use check_packages** instead of raw apt-get/dnf
 - ⚠️ **Always call clean_up()** at the end to reduce image size
-- ⚠️ **Check /etc/skel** for default configs before creating new ones
 - ⚠️ **Use `grep -qxF`** to avoid duplicate PATH exports
 
 ## References

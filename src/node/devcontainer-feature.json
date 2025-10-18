@@ -7,9 +7,19 @@
   "options": {
     "version": {
       "type": "string",
-      "proposals": ["lts", "latest", "22", "20", "18"],
+      "proposals": ["lts", "latest", "none", "22", "20", "18", "16"],
       "default": "lts",
-      "description": "Select or enter a Node.js version to install"
+      "description": "Select or enter a Node.js version to install. Use 'lts' for the latest LTS version."
+    },
+    "nodeGypDependencies": {
+      "type": "boolean",
+      "default": true,
+      "description": "Install dependencies to compile native node modules (node-gyp)?"
+    },
+    "fnmInstallPath": {
+      "type": "string",
+      "default": "/usr/local/share/fnm",
+      "description": "The path where fnm will be installed."
     },
     "installLts": {
       "type": "boolean",
@@ -28,14 +38,32 @@
     },
     "pnpmVersion": {
       "type": "string",
-      "proposals": ["latest", "8", "9"],
+      "proposals": ["latest", "9", "8", "none"],
       "default": "latest",
-      "description": "pnpm version to install"
+      "description": "Select or enter the pnpm version to install"
     },
     "nvmAlias": {
       "type": "boolean",
       "default": true,
       "description": "Create 'nvm' alias for fnm for compatibility?"
+    }
+  },
+  "containerEnv": {
+    "FNM_DIR": "/usr/local/share/fnm",
+    "PATH": "/usr/local/share/fnm:${PATH}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "github.copilot.chat.codeGeneration.instructions": [
+          {
+            "text": "This dev container includes Node.js via fnm, with npm, yarn, and pnpm pre-installed for JavaScript/TypeScript development."
+          }
+        ]
+      }
     }
   }
 }

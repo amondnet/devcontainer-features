@@ -1,0 +1,47 @@
+{
+  "id": "flutter",
+  "version": "1.0.0",
+  "name": "Flutter",
+  "description": "Installs Flutter SDK for cross-platform app development with Dart (via FVM - Flutter Version Management)",
+  "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/flutter",
+  "options": {
+    "version": {
+      "type": "string",
+      "proposals": ["stable", "beta", "dev", "master", "3.24"],
+      "default": "stable",
+      "description": "Select a Flutter channel (stable, beta, dev, master) or specific version to install. Channels: stable (production), beta (preview), dev (latest features)"
+    },
+    "installAndroidSdk": {
+      "type": "boolean",
+      "default": false,
+      "description": "Install Android SDK and platform tools for mobile development?"
+    },
+    "androidSdkVersion": {
+      "type": "string",
+      "proposals": ["latest", "34", "33", "32"],
+      "default": "latest",
+      "description": "Android SDK API level to install (only used if installAndroidSdk is true)"
+    }
+  },
+  "containerEnv": {
+    "FVM_HOME": "/usr/local/share/fvm",
+    "PATH": "/usr/local/share/fvm/default/bin:${PATH}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.dart-code",
+        "Dart-Code.flutter"
+      ],
+      "settings": {
+        "dart.flutterSdkPath": "/usr/local/share/fvm/default",
+        "dart.previewFlutterUiGuides": true,
+        "github.copilot.chat.codeGeneration.instructions": [
+          {
+            "text": "This dev container includes Flutter SDK via FVM for cross-platform mobile and desktop app development with Dart."
+          }
+        ]
+      }
+    }
+  }
+}

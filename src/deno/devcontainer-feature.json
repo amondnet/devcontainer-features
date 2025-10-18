@@ -2,13 +2,40 @@
   "id": "deno",
   "version": "1.0.0",
   "name": "Deno",
-  "description": "Installs Deno - Secure TypeScript/JavaScript runtime",
+  "description": "Installs Deno - A modern secure TypeScript/JavaScript runtime with built-in tooling",
   "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/deno",
   "options": {
     "version": {
       "type": "string",
+      "proposals": ["latest", "none", "2.0", "1.46", "1.45"],
       "default": "latest",
-      "description": "Deno version to install (e.g., 'latest', 'v1.40.0')"
+      "description": "Select or enter a Deno version to install. 'latest' installs the most recent stable release."
+    },
+    "installUnstable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable unstable Deno features?"
+    }
+  },
+  "containerEnv": {
+    "DENO_INSTALL": "/usr/local/deno",
+    "PATH": "/usr/local/deno/bin:${PATH}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "denoland.vscode-deno"
+      ],
+      "settings": {
+        "deno.enable": true,
+        "deno.lint": true,
+        "deno.unstable": false,
+        "github.copilot.chat.codeGeneration.instructions": [
+          {
+            "text": "This dev container includes Deno runtime pre-installed for secure TypeScript/JavaScript development with built-in formatting and linting."
+          }
+        ]
+      }
     }
   }
 }

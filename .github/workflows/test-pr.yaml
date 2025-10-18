@@ -15,10 +15,9 @@ jobs:
             bun: ./**/bun/**
             claude-code: ./**/claude-code/**
             deno: ./**/deno/**
-            fvm: ./**/fvm/**
+            flutter: ./**/flutter/**
             graphite: ./**/graphite/**
             node: ./**/node/**
-            sdkman: ./**/sdkman/**
             shell-utils: ./**/shell-utils/**
 
   test:

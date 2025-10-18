@@ -12,9 +12,14 @@ source dev-container-features-test-lib
 echo "Testing complete development environment..."
 
 # Setup environment variables
-export PATH="$HOME/.local/share/fnm:$HOME/.local/bin:$HOME/.bun/bin:$HOME/.deno/bin:$HOME/.pub-cache/bin:$PATH"
+export FNM_DIR="/usr/local/share/fnm"
+export DENO_INSTALL="/usr/local/deno"
+export FVM_HOME="/usr/local/share/fvm"
+export PATH="$FNM_DIR:$HOME/.local/bin:$DENO_INSTALL/bin:$FVM_HOME/default/bin:$PATH"
+# Bun and Claude Code are installed via Homebrew (Linuxbrew) PATH
+# Flutter is installed via FVM system-wide
 if command -v fnm &> /dev/null; then
-    eval "$(fnm env 2>/dev/null)" || true
+    eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR 2>/dev/null)" || true
 fi
 
 # Shell utilities

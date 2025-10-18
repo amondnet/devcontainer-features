@@ -42,5 +42,28 @@
       "default": true,
       "description": "Upgrade OS packages during installation?"
     }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.remote-explorer",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh",
+            "args": ["-l"],
+            "icon": "terminal-bash"
+          }
+        },
+        "github.copilot.chat.codeGeneration.instructions": [
+          {
+            "text": "This dev container includes Zsh with Zimfw/Oh My Zsh framework and Oh My Posh prompt customization for enhanced shell development experience."
+          }
+        ]
+      }
+    }
   }
 }

@@ -2,9 +2,32 @@
   "id": "graphite",
   "version": "1.0.0",
   "name": "Graphite CLI",
-  "description": "Installs Graphite CLI for stacked pull request workflows (via homebrew)",
+  "description": "Installs Graphite CLI (gt) for managing stacked pull request workflows, enhancing Git productivity with better PR dependency management (via Homebrew)",
   "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/graphite",
-  "options": {},
+  "options": {
+    "version": {
+      "type": "string",
+      "proposals": ["latest", "1.0", "0.21"],
+      "default": "latest",
+      "description": "Select or enter a Graphite CLI version to install"
+    },
+    "configureAliases": {
+      "type": "boolean",
+      "default": true,
+      "description": "Configure helpful git aliases for Graphite workflows?"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "github.copilot.chat.codeGeneration.instructions": [
+          {
+            "text": "This dev container includes Graphite CLI (gt command) for managing stacked pull requests and improving Git workflow productivity."
+          }
+        ]
+      }
+    }
+  },
   "dependsOn": {
     "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
   }
