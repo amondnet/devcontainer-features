@@ -109,27 +109,36 @@ mkdir -p "${FVM_HOME}"
 # Install FVM to system-wide location
 echo "Installing FVM..."
 export FVM_ALLOW_ROOT=true
-curl -fsSL https://fvm.app/install.sh | bash -s -- --install-dir "${FVM_HOME}" || true
+curl -fsSL https://fvm.app/install.sh | bash -s -- --install-dir "${FVM_HOME}"
+
+# Verify FVM installation
+if [ ! -f "${FVM_HOME}/fvm" ]; then
+    echo "ERROR: FVM installation failed - fvm binary not found at ${FVM_HOME}/fvm"
+    exit 1
+fi
 
 # Make FVM accessible in PATH
-ln -sf "${FVM_HOME}/fvm" /usr/local/bin/fvm || true
+ln -sf "${FVM_HOME}/fvm" /usr/local/bin/fvm
 
 # Setup FVM environment
 export PATH="${FVM_HOME}:$PATH"
 
 # Install Flutter version
 echo "Installing Flutter ${FLUTTER_VERSION}..."
-"${FVM_HOME}/fvm" install "${FLUTTER_VERSION}" || true
+"${FVM_HOME}/fvm" install "${FLUTTER_VERSION}"
 
 # Set global Flutter version
 echo "Setting global Flutter version to ${FLUTTER_VERSION}..."
-"${FVM_HOME}/fvm" global "${FLUTTER_VERSION}" || true
+"${FVM_HOME}/fvm" global "${FLUTTER_VERSION}"
 
 # Verify installation
 echo "✅ Flutter installed successfully!"
 if [ -f "${FVM_HOME}/default/bin/flutter" ]; then
     echo "Flutter version:"
-    "${FVM_HOME}/default/bin/flutter" --version || true
+    "${FVM_HOME}/default/bin/flutter" --version
+else
+    echo "WARNING: Flutter binary not found at ${FVM_HOME}/default/bin/flutter"
+    exit 1
 fi
 
 # Clean up
