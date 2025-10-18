@@ -223,6 +223,7 @@ if [ "${NODE_VERSION}" = "lts" ] || [ "${NODE_VERSION}" = "none" ]; then
         INSTALLED_LTS=$(fnm list | grep -oP 'v\d+\.\d+\.\d+' | head -n1 | sed 's/^v//')
         if [ -n "$INSTALLED_LTS" ]; then
             fnm default "$INSTALLED_LTS"
+            fnm use "$INSTALLED_LTS"
         fi
     fi
 else
@@ -230,6 +231,7 @@ else
     echo "Installing Node.js ${NODE_VERSION}..."
     fnm install "${NODE_VERSION}"
     fnm default "${NODE_VERSION}"
+    fnm use "${NODE_VERSION}"
 
     # Also install LTS if requested (different from specified version)
     if [ "${INSTALLLTS}" = "true" ]; then
@@ -242,28 +244,46 @@ fi
 echo "Installed Node.js versions:"
 fnm list
 
-# Verify installation by running node through fnm
+# Create symlinks for node, npm, and npx in /usr/local/bin for direct access
+echo "Creating symlinks for node, npm, and npx..."
+DEFAULT_VERSION=$(fnm list | grep 'default' | grep -oP 'v\d+\.\d+\.\d+' | head -n1)
+if [ -n "$DEFAULT_VERSION" ]; then
+    NODE_PATH="${FNM_DIR}/node-versions/${DEFAULT_VERSION}/installation/bin"
+    ln -sf "${NODE_PATH}/node" /usr/local/bin/node
+    ln -sf "${NODE_PATH}/npm" /usr/local/bin/npm
+    ln -sf "${NODE_PATH}/npx" /usr/local/bin/npx
+fi
+
+# Verify installation by running node directly
 echo "Node.js version:"
-fnm exec --using=default node --version
+node --version
 echo "npm version:"
-fnm exec --using=default npm --version
+npm --version
 
 # Install Yarn if requested
 if [ "${INSTALLYARN}" = "true" ]; then
     echo "Installing Yarn..."
-    fnm exec --using=default npm install -g yarn
-    echo "Yarn version: $(fnm exec --using=default yarn --version)"
+    npm install -g yarn
+    # Create symlink for yarn
+    if [ -n "$DEFAULT_VERSION" ]; then
+        ln -sf "${NODE_PATH}/yarn" /usr/local/bin/yarn
+    fi
+    echo "Yarn version: $(yarn --version)"
 fi
 
 # Install pnpm if requested
 if [ "${INSTALLPNPM}" = "true" ] && [ "${PNPMVERSION}" != "none" ]; then
     echo "Installing pnpm ${PNPMVERSION}..."
     if [ "${PNPMVERSION}" = "latest" ]; then
-        fnm exec --using=default npm install -g pnpm
+        npm install -g pnpm
     else
-        fnm exec --using=default npm install -g pnpm@${PNPMVERSION}
+        npm install -g pnpm@${PNPMVERSION}
     fi
-    echo "pnpm version: $(fnm exec --using=default pnpm --version)"
+    # Create symlink for pnpm
+    if [ -n "$DEFAULT_VERSION" ]; then
+        ln -sf "${NODE_PATH}/pnpm" /usr/local/bin/pnpm
+    fi
+    echo "pnpm version: $(pnpm --version)"
 fi
 
 # Add nvm alias for compatibility if requested
@@ -279,13 +299,13 @@ echo "=========================================="
 echo "✅ Node.js installation completed!"
 echo "=========================================="
 echo "fnm: $(fnm --version)"
-echo "Node.js: $(fnm exec --using=default node --version)"
-echo "npm: $(fnm exec --using=default npm --version)"
-if fnm exec --using=default yarn --version &> /dev/null; then
-    echo "Yarn: $(fnm exec --using=default yarn --version)"
+echo "Node.js: $(node --version)"
+echo "npm: $(npm --version)"
+if yarn --version &> /dev/null; then
+    echo "Yarn: $(yarn --version)"
 fi
-if fnm exec --using=default pnpm --version &> /dev/null; then
-    echo "pnpm: $(fnm exec --using=default pnpm --version)"
+if pnpm --version &> /dev/null; then
+    echo "pnpm: $(pnpm --version)"
 fi
 
 # Clean up

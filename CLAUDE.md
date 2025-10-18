@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code when working with devcontainer features in this repository.
 
+## Repository Information
+
+- **Repository**: amondnet/devcontainer-features
+- **Published Registry**: ghcr.io/amondnet/devcontainer-features
+- **Purpose**: Custom devcontainer features for development environments
+
+Features are modular, reusable installation units that can be composed in `devcontainer.json`.
+
 ## Repository Overview
 
 This repository contains custom devcontainer features for development environments. Features are modular, reusable installation units that can be composed in `devcontainer.json`.
@@ -84,13 +92,15 @@ Some features require other features to be installed first:
 ```json
 {
   "dependsOn": {
-    "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
+    "ghcr.io/amondnet/devcontainer-features/node": {}
   }
 }
 ```
 
+**IMPORTANT**: Use `ghcr.io/amondnet/devcontainer-features/` prefix for all feature dependencies in this repository.
+
 **Features with dependencies:**
-- **graphite** - Requires homebrew
+- **graphite** - Requires node (from this registry)
 
 ### 4. Environment Variables (containerEnv)
 
