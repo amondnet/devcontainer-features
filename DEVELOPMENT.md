@@ -91,12 +91,13 @@ clean_up() {
 Each feature requires certain packages. Always use `check_packages` before installation:
 
 - **All features**: `curl ca-certificates`
-- **Archive extraction**: Add `unzip` (bun, deno, fvm) or `zip unzip` (sdkman)
+- **Archive extraction**: Add `unzip` (bun, deno, flutter)
 - **Shell features**: Add `zsh`
+- **Git operations**: Add `git` (flutter requires git for FVM)
 
 Example:
 ```bash
-check_packages curl ca-certificates unzip
+check_packages curl ca-certificates unzip git xz-utils
 ```
 
 ### User Context Pattern
@@ -177,6 +178,74 @@ fi
 ```
 
 3. **Copy to root after installation** (see User Context Pattern above)
+
+### Homebrew Installation Pattern
+
+Features that depend on Homebrew (bun, graphite, claude-code, flutter) must handle the root user context properly, as Homebrew refuses to run as root.
+
+#### Pattern: Root User Workaround
+
+```bash
+# Determine the appropriate non-root user
+USERNAME="${USERNAME:-"automatic"}"
+if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
+    USERNAME=""
+    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
+    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
+        if id -u ${CURRENT_USER} > /dev/null 2>&1; then
+            USERNAME=${CURRENT_USER}
+            break
+        fi
+    done
+    if [ "${USERNAME}" = "" ]; then
+        USERNAME=root
+    fi
+elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
+    USERNAME=root
+fi
+
+# Install via Homebrew with proper user handling
+if [ "${USERNAME}" = "root" ]; then
+    # If we must run as root, use HOMEBREW_FORCE_BREWED_CURL
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export NONINTERACTIVE=1
+    HOMEBREW_FORCE_BREWED_CURL=1 brew install <package> || {
+        echo "Warning: brew install failed as root, trying with su..."
+        # Create a temporary user if needed
+        if ! id -u linuxbrew > /dev/null 2>&1; then
+            useradd -m -s /bin/bash linuxbrew
+        fi
+        chown -R linuxbrew:linuxbrew /home/linuxbrew/.linuxbrew
+        mkdir -p /home/linuxbrew/.cache
+        chown -R linuxbrew:linuxbrew /home/linuxbrew/.cache
+        su - linuxbrew << 'EOF'
+export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+export HOMEBREW_NO_AUTO_UPDATE=1
+brew install <package>
+EOF
+    }
+else
+    # Run as non-root user
+    su - ${USERNAME} << 'EOF'
+export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+export HOMEBREW_NO_AUTO_UPDATE=1
+brew install <package>
+EOF
+fi
+```
+
+**Key Points:**
+- Always detect the user context first
+- Try `HOMEBREW_FORCE_BREWED_CURL=1` for root installations
+- Fall back to `linuxbrew` user if root installation fails
+- Use `su -` to switch to non-root user for normal installations
+- Set `HOMEBREW_NO_AUTO_UPDATE=1` to speed up installations
+
+**Features using this pattern:**
+- `bun` - Bun JavaScript runtime
+- `graphite` - Graphite CLI for stacked PRs
+- `claude-code` - Claude Code CLI
+- `flutter` - Flutter SDK via FVM
 
 ### Testing Features
 
@@ -277,16 +346,20 @@ Use `grep -qxF` to check if line already exists before adding.
 When creating a new feature:
 
 - [ ] Create `devcontainer-feature.json` with proper metadata
+- [ ] Add `dependsOn` if feature requires homebrew or other features
 - [ ] Create `install.sh` with shebang `#!/usr/bin/env bash`
 - [ ] Add `set -e` at the top
 - [ ] Include common utility functions (check_packages, pkg_mgr_update, clean_up)
 - [ ] Use `check_packages` to install dependencies
 - [ ] Implement user detection (USERNAME=automatic pattern)
+- [ ] For Homebrew features: Use the Homebrew installation pattern with root handling
 - [ ] Install tools for detected user using `su - ${USERNAME}`
 - [ ] Copy configs to root if installing for non-root user
 - [ ] Add PATH exports to shell configs
+- [ ] Verify installation succeeded (check command exists, run --version)
 - [ ] Call `clean_up` at the end
 - [ ] Create test script in `test/feature-name/test.sh`
+- [ ] Add diagnostic output to test script for debugging failures
 - [ ] Test with multiple base images (ubuntu:latest, debian:latest, etc.)
 
 ## Common Mistakes to Avoid
@@ -300,6 +373,9 @@ When creating a new feature:
 7. **Not handling /etc/skel**: Check /etc/skel for default config files first
 8. **Variable conflicts with /etc/os-release**: Save feature options BEFORE sourcing /etc/os-release (e.g., `NODE_VERSION=${VERSION:-"lts"}` before `. /etc/os-release`)
 9. **Duplicate installations**: Check if version options overlap (e.g., VERSION="lts" + INSTALLLTS="true")
+10. **Running Homebrew as root**: Use the Homebrew installation pattern with HOMEBREW_FORCE_BREWED_CURL and linuxbrew fallback
+11. **Silent failures with || true**: Avoid using `|| true` on critical installation steps - let `set -e` catch real errors
+12. **No installation verification**: Always verify that tools are installed and accessible after installation
 
 ## Useful Commands
 
