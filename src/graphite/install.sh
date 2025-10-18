@@ -28,6 +28,9 @@ clean_up() {
 
 echo "Installing Graphite CLI..."
 
+# Setup PATH to include /usr/local/bin where node symlinks should be
+export PATH="/usr/local/bin:$PATH"
+
 # Setup environment for node (may be from nvm or fnm depending on which node feature is used)
 # Check for nvm (official devcontainers feature)
 if [ -d "/usr/local/share/nvm" ]; then
@@ -36,25 +39,37 @@ if [ -d "/usr/local/share/nvm" ]; then
 # Check for fnm (amondnet feature)
 elif [ -d "/usr/local/share/fnm" ]; then
     export FNM_DIR="/usr/local/share/fnm"
-    export PATH="$FNM_DIR:/usr/local/bin:$PATH"
-    [ -s "/usr/local/bin/fnm" ] && eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
+    export PATH="$FNM_DIR:$PATH"
+    # Source fnm environment if available
+    if [ -s "/usr/local/bin/fnm" ]; then
+        eval "$(fnm env --use-on-cd --fnm-dir $FNM_DIR)"
+        # Activate default node version
+        DEFAULT_VERSION=$(fnm list 2>/dev/null | grep 'default' | grep -oP 'v\d+\.\d+\.\d+' | head -n1)
+        if [ -n "$DEFAULT_VERSION" ]; then
+            fnm use "$DEFAULT_VERSION" 2>/dev/null || true
+        fi
+    fi
 fi
 
 # Verify node and npm are available
 if ! command -v node &> /dev/null; then
     echo "❌ Node.js is required but not found."
     echo "Please install a 'node' feature before installing graphite."
+    echo "PATH: $PATH"
+    echo "Available commands:"
+    ls -la /usr/local/bin/node* 2>/dev/null || echo "No node binaries found in /usr/local/bin"
     exit 1
 fi
 
 if ! command -v npm &> /dev/null; then
     echo "❌ npm is required but not found."
     echo "Please install a 'node' feature before installing graphite."
+    echo "PATH: $PATH"
     exit 1
 fi
 
-echo "Node.js found: $(node --version)"
-echo "npm found: $(npm --version)"
+echo "✅ Node.js found: $(node --version)"
+echo "✅ npm found: $(npm --version)"
 
 # Install Graphite CLI via npm globally
 echo "Installing @withgraphite/graphite-cli@${GRAPHITE_VERSION}..."
