@@ -33,14 +33,11 @@ Installs Bun - Fast JavaScript runtime and toolkit.
 ### deno
 Installs Deno - Secure TypeScript/JavaScript runtime.
 
-### sdkman
-Installs SDKMAN - Software Development Kit Manager for Java/JVM ecosystem.
-
 ### claude-code
 Installs Claude Code - AI-powered coding assistant CLI.
 
-### fvm
-Installs FVM - Flutter Version Management.
+### flutter
+Installs Flutter with FVM (Flutter Version Manager) for version management.
 
 ## Usage
 
@@ -61,9 +58,8 @@ Installs FVM - Flutter Version Management.
     "ghcr.io/amondnet/devcontainer-features/graphite:1": {},
     "ghcr.io/amondnet/devcontainer-features/bun:1": {},
     "ghcr.io/amondnet/devcontainer-features/deno:1": {},
-    "ghcr.io/amondnet/devcontainer-features/sdkman:1": {},
     "ghcr.io/amondnet/devcontainer-features/claude-code:1": {},
-    "ghcr.io/amondnet/devcontainer-features/fvm:1": {}
+    "ghcr.io/amondnet/devcontainer-features/flutter:1": {}
   }
 }
 ```

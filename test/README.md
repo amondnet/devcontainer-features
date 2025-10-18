@@ -147,9 +147,8 @@ Current coverage:
 - ✅ graphite (auto-generated)
 - ✅ bun (auto-generated)
 - ✅ deno (auto-generated)
-- ✅ sdkman (auto-generated)
 - ✅ claude-code (auto-generated)
-- ✅ fvm (auto-generated)
+- ✅ flutter (auto-generated)
 - ✅ Global scenarios (4 scenarios)
 
 ## Debugging

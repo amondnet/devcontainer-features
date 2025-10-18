@@ -19,9 +19,8 @@ jobs:
           - graphite
           - bun
           - deno
-          - sdkman
           - claude-code
-          - fvm
+          - flutter
         baseImage:
           # - debian:latest
           - ubuntu:latest
