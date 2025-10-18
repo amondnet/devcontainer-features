@@ -12,6 +12,9 @@
       "description": "Select Claude Code CLI version to install (stable, latest, or specific version like 1.0.58)"
     }
   },
+  "containerEnv": {
+    "PATH": "$HOME/.local/bin:${PATH}"
+  },
   "customizations": {
     "vscode": {
       "extensions": [

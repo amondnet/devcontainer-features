@@ -24,7 +24,7 @@
     }
   },
   "containerEnv": {
-    "FVM_HOME": "/usr/local/share/fvm",
+    "FVM_CACHE_PATH": "/usr/local/share/fvm",
     "PATH": "/usr/local/share/fvm/default/bin:${PATH}"
   },
   "customizations": {

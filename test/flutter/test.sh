@@ -10,20 +10,20 @@ set -e
 source dev-container-features-test-lib
 
 # Setup environment for system-wide Flutter
-export FVM_HOME="/usr/local/share/fvm"
-export PATH="$FVM_HOME/default/bin:$PATH"
+export FVM_CACHE_PATH="/usr/local/share/fvm"
+export PATH="$FVM_CACHE_PATH/default/bin:$PATH"
 
 # Debug info for test failures
 echo "=== Flutter Installation Diagnostics ==="
-echo "FVM_HOME: ${FVM_HOME}"
+echo "FVM_CACHE_PATH: ${FVM_CACHE_PATH}"
 echo "Current PATH: ${PATH}"
 echo ""
 echo "Checking FVM installation:"
-if [ -d "${FVM_HOME}" ]; then
-    echo "✓ FVM_HOME directory exists"
-    ls -la "${FVM_HOME}" | head -10
+if [ -d "${FVM_CACHE_PATH}" ]; then
+    echo "✓ FVM_CACHE_PATH directory exists"
+    ls -la "${FVM_CACHE_PATH}" | head -10
 else
-    echo "✗ FVM_HOME directory does not exist"
+    echo "✗ FVM_CACHE_PATH directory does not exist"
 fi
 echo ""
 if [ -f /usr/local/bin/fvm ]; then

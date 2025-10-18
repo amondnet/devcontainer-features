@@ -3,7 +3,7 @@ set -e
 
 # Save VERSION option before sourcing os-release
 FLUTTER_VERSION=${VERSION:-"stable"}
-export FVM_HOME="/usr/local/share/fvm"
+export FVM_CACHE_PATH="/usr/local/share/fvm"
 
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
@@ -98,7 +98,7 @@ clean_up() {
 
 echo "Installing Flutter via FVM..."
 echo "Flutter channel: ${FLUTTER_VERSION}"
-echo "FVM home: ${FVM_HOME}"
+echo "FVM cache path: ${FVM_CACHE_PATH}"
 
 # Install required packages
 check_packages curl ca-certificates git unzip xz-utils
@@ -118,26 +118,26 @@ echo "FVM installed successfully:"
 fvm --version
 
 # Create system-wide FVM cache directory
-mkdir -p "${FVM_HOME}"
+mkdir -p "${FVM_CACHE_PATH}"
 
 # Install Flutter version
 echo "Installing Flutter ${FLUTTER_VERSION}..."
-FVM_HOME="${FVM_HOME}" fvm install "${FLUTTER_VERSION}"
+FVM_CACHE_PATH="${FVM_CACHE_PATH}" fvm install "${FLUTTER_VERSION}"
 
 # Set global Flutter version
 echo "Setting global Flutter version to ${FLUTTER_VERSION}..."
-FVM_HOME="${FVM_HOME}" fvm global "${FLUTTER_VERSION}"
+FVM_CACHE_PATH="${FVM_CACHE_PATH}" fvm global "${FLUTTER_VERSION}"
 
 # Verify Flutter installation
 echo "Verifying Flutter installation..."
-if [ -f "${FVM_HOME}/default/bin/flutter" ]; then
+if [ -f "${FVM_CACHE_PATH}/default/bin/flutter" ]; then
     echo "✅ Flutter installed successfully!"
     echo "Flutter version:"
-    "${FVM_HOME}/default/bin/flutter" --version
+    "${FVM_CACHE_PATH}/default/bin/flutter" --version
 else
-    echo "ERROR: Flutter binary not found at ${FVM_HOME}/default/bin/flutter"
-    echo "Contents of ${FVM_HOME}:"
-    ls -la "${FVM_HOME}" || true
+    echo "ERROR: Flutter binary not found at ${FVM_CACHE_PATH}/default/bin/flutter"
+    echo "Contents of ${FVM_CACHE_PATH}:"
+    ls -la "${FVM_CACHE_PATH}" || true
     exit 1
 fi
 

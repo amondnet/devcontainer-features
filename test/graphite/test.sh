@@ -3,7 +3,7 @@
 # This test file will be executed against an auto-generated devcontainer.json that
 # includes the 'graphite' feature with no options.
 #
-# Thanks to 'dependsOn', homebrew will be automatically installed!
+# Thanks to 'dependsOn', node will be automatically installed!
 
 set -e
 
@@ -12,6 +12,8 @@ set -e
 source dev-container-features-test-lib
 
 # Feature-specific tests
+check "node installed" bash -c "command -v node"
+check "npm installed" bash -c "command -v npm"
 check "gt installed" bash -c "command -v gt"
 check "gt version" bash -c "gt --version"
 
