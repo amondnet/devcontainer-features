@@ -103,41 +103,95 @@ echo "FVM home: ${FVM_HOME}"
 # Install required packages
 check_packages curl ca-certificates git unzip xz-utils
 
-# Create FVM directory
-mkdir -p "${FVM_HOME}"
+# Determine the appropriate non-root user
+USERNAME="${USERNAME:-"automatic"}"
+if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
+    USERNAME=""
+    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
+    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
+        if id -u ${CURRENT_USER} > /dev/null 2>&1; then
+            USERNAME=${CURRENT_USER}
+            break
+        fi
+    done
+    if [ "${USERNAME}" = "" ]; then
+        USERNAME=root
+    fi
+elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
+    USERNAME=root
+fi
 
-# Install FVM to system-wide location
-echo "Installing FVM..."
-export FVM_ALLOW_ROOT=true
-curl -fsSL https://fvm.app/install.sh | bash -s -- --install-dir "${FVM_HOME}"
-
-# Verify FVM installation
-if [ ! -f "${FVM_HOME}/fvm" ]; then
-    echo "ERROR: FVM installation failed - fvm binary not found at ${FVM_HOME}/fvm"
+# Verify Homebrew is available
+if ! command -v brew > /dev/null 2>&1; then
+    echo "ERROR: Homebrew is required but not found. Please ensure the homebrew feature is installed."
     exit 1
 fi
 
-# Make FVM accessible in PATH
-ln -sf "${FVM_HOME}/fvm" /usr/local/bin/fvm
+echo "Homebrew found: $(brew --version | head -n 1)"
 
-# Setup FVM environment
-export PATH="${FVM_HOME}:$PATH"
+# Install FVM via Homebrew
+echo "Installing FVM via Homebrew..."
+if [ "${USERNAME}" = "root" ]; then
+    # If we must run as root, use HOMEBREW_FORCE_BREWED_CURL
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export NONINTERACTIVE=1
+    HOMEBREW_FORCE_BREWED_CURL=1 brew tap leoafarias/fvm || {
+        echo "Warning: brew tap failed as root, trying with su..."
+        # Create a temporary user if needed
+        if ! id -u linuxbrew > /dev/null 2>&1; then
+            useradd -m -s /bin/bash linuxbrew
+        fi
+        chown -R linuxbrew:linuxbrew /home/linuxbrew/.linuxbrew
+        mkdir -p /home/linuxbrew/.cache
+        chown -R linuxbrew:linuxbrew /home/linuxbrew/.cache
+        su - linuxbrew << 'EOF'
+export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+export HOMEBREW_NO_AUTO_UPDATE=1
+brew tap leoafarias/fvm
+brew install fvm
+EOF
+    }
+    HOMEBREW_FORCE_BREWED_CURL=1 brew install fvm || true
+else
+    # Run as non-root user
+    su - ${USERNAME} << 'EOF'
+export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+export HOMEBREW_NO_AUTO_UPDATE=1
+brew tap leoafarias/fvm
+brew install fvm
+EOF
+fi
+
+# Verify FVM installation
+if ! command -v fvm > /dev/null 2>&1; then
+    echo "ERROR: FVM installation failed - fvm command not found in PATH"
+    exit 1
+fi
+
+echo "FVM installed successfully:"
+fvm --version
+
+# Create system-wide FVM cache directory
+mkdir -p "${FVM_HOME}"
 
 # Install Flutter version
 echo "Installing Flutter ${FLUTTER_VERSION}..."
-"${FVM_HOME}/fvm" install "${FLUTTER_VERSION}"
+FVM_HOME="${FVM_HOME}" fvm install "${FLUTTER_VERSION}"
 
 # Set global Flutter version
 echo "Setting global Flutter version to ${FLUTTER_VERSION}..."
-"${FVM_HOME}/fvm" global "${FLUTTER_VERSION}"
+FVM_HOME="${FVM_HOME}" fvm global "${FLUTTER_VERSION}"
 
-# Verify installation
-echo "✅ Flutter installed successfully!"
+# Verify Flutter installation
+echo "Verifying Flutter installation..."
 if [ -f "${FVM_HOME}/default/bin/flutter" ]; then
+    echo "✅ Flutter installed successfully!"
     echo "Flutter version:"
     "${FVM_HOME}/default/bin/flutter" --version
 else
-    echo "WARNING: Flutter binary not found at ${FVM_HOME}/default/bin/flutter"
+    echo "ERROR: Flutter binary not found at ${FVM_HOME}/default/bin/flutter"
+    echo "Contents of ${FVM_HOME}:"
+    ls -la "${FVM_HOME}" || true
     exit 1
 fi
 

@@ -13,7 +13,7 @@ This repository contains custom devcontainer features for development environmen
 1. **shell-utils** - Zsh with Zimfw/Oh My Zsh + Oh My Posh
 2. **node** - Node.js via fnm (Fast Node Manager, system-wide at `/usr/local/share/fnm`)
 3. **deno** - Deno runtime (system-wide at `/usr/local/deno`)
-4. **flutter** - Flutter (via FVM, system-wide at `/usr/local/share/fvm`)
+4. **flutter** - Flutter (via FVM, system-wide at `/usr/local/share/fvm`, requires homebrew feature)
 5. **bun** - Bun JavaScript runtime (via Homebrew, requires homebrew feature)
 6. **graphite** - Graphite CLI for stacked PRs (requires homebrew feature)
 7. **claude-code** - Claude Code CLI (via Homebrew, requires homebrew feature)
@@ -92,6 +92,7 @@ Some features require other features to be installed first:
 **Features with dependencies:**
 - **bun** - Requires homebrew
 - **graphite** - Requires homebrew
+- **flutter** - Requires homebrew
 
 ### 4. Environment Variables (containerEnv)
 
