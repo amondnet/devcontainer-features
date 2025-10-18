@@ -2,6 +2,8 @@
 
 # This test file will be executed against an auto-generated devcontainer.json that
 # includes the 'graphite' feature with no options.
+#
+# Thanks to 'dependsOn', homebrew will be automatically installed!
 
 set -e
 

@@ -11,74 +11,6 @@ elif [ "${ID}" = "rhel" ] || [ "${ID}" = "fedora" ] || [ "${ID}" = "mariner" ] |
     ADJUSTED_ID="rhel"
 fi
 
-# Setup INSTALL_CMD & PKG_MGR_CMD
-if type apt-get > /dev/null 2>&1; then
-    PKG_MGR_CMD=apt-get
-    INSTALL_CMD="${PKG_MGR_CMD} -y install --no-install-recommends"
-elif type microdnf > /dev/null 2>&1; then
-    PKG_MGR_CMD=microdnf
-    INSTALL_CMD="${PKG_MGR_CMD} -y install --refresh --best --nodocs --noplugins --setopt=install_weak_deps=0"
-elif type dnf > /dev/null 2>&1; then
-    PKG_MGR_CMD=dnf
-    INSTALL_CMD="${PKG_MGR_CMD} -y install"
-elif type yum > /dev/null 2>&1; then
-    PKG_MGR_CMD=yum
-    INSTALL_CMD="${PKG_MGR_CMD} -y install"
-else
-    echo "(Error) Unable to find a supported package manager."
-    exit 1
-fi
-
-pkg_mgr_update() {
-    case ${ADJUSTED_ID} in
-        debian)
-            if [ "$(find /var/lib/apt/lists/* 2>/dev/null | wc -l)" = "0" ]; then
-                echo "Running apt-get update..."
-                ${PKG_MGR_CMD} update -y
-            fi
-            ;;
-        rhel)
-            if [ ${PKG_MGR_CMD} = "microdnf" ]; then
-                if [ "$(ls /var/cache/yum/* 2>/dev/null | wc -l)" = 0 ]; then
-                    echo "Running ${PKG_MGR_CMD} makecache..."
-                    ${PKG_MGR_CMD} makecache
-                fi
-            else
-                if [ "$(ls /var/cache/${PKG_MGR_CMD}/* 2>/dev/null | wc -l)" = 0 ]; then
-                    echo "Running ${PKG_MGR_CMD} check-update..."
-                    set +e
-                    stderr_messages=$(${PKG_MGR_CMD} -q check-update 2>&1)
-                    rc=$?
-                    if [ $rc != 0 ] && [ $rc != 100 ]; then
-                        echo "(Error) ${PKG_MGR_CMD} check-update produced the following error message(s):"
-                        echo "${stderr_messages}"
-                        exit 1
-                    fi
-                    set -e
-                fi
-            fi
-            ;;
-    esac
-}
-
-# Checks if packages are installed and installs them if not
-check_packages() {
-    case ${ADJUSTED_ID} in
-        debian)
-            if ! dpkg -s "$@" > /dev/null 2>&1; then
-                pkg_mgr_update
-                ${INSTALL_CMD} "$@"
-            fi
-            ;;
-        rhel)
-            if ! rpm -q "$@" > /dev/null 2>&1; then
-                pkg_mgr_update
-                ${INSTALL_CMD} "$@"
-            fi
-            ;;
-    esac
-}
-
 # Clean up
 clean_up() {
     case ${ADJUSTED_ID} in
@@ -91,22 +23,64 @@ clean_up() {
     esac
 }
 
+# Determine the appropriate non-root user
+USERNAME="${USERNAME:-"automatic"}"
+if [ "${USERNAME}" = "auto" ] || [ "${USERNAME}" = "automatic" ]; then
+    USERNAME=""
+    POSSIBLE_USERS=("vscode" "node" "codespace" "$(awk -v val=1000 -F ":" '$3==val{print $1}' /etc/passwd)")
+    for CURRENT_USER in "${POSSIBLE_USERS[@]}"; do
+        if id -u ${CURRENT_USER} > /dev/null 2>&1; then
+            USERNAME=${CURRENT_USER}
+            break
+        fi
+    done
+    if [ "${USERNAME}" = "" ]; then
+        USERNAME=root
+    fi
+elif [ "${USERNAME}" = "none" ] || ! id -u ${USERNAME} > /dev/null 2>&1; then
+    USERNAME=root
+fi
 
 echo "Installing Graphite CLI..."
 
-# Check for Node.js and npm
-if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
-    echo "❌ Node.js and npm are required but not found."
-    echo "Please install the 'node' feature before installing graphite."
+# Check for Homebrew
+if ! command -v brew &> /dev/null; then
+    echo "❌ Homebrew is required but not found."
+    echo "Please install the 'homebrew' feature before installing graphite."
     exit 1
 fi
 
-echo "Node.js version: $(node --version)"
-echo "npm version: $(npm --version)"
+echo "Homebrew found: $(brew --version | head -n 1)"
 
-# Install Graphite CLI via npm
-echo "Installing @withgraphite/graphite-cli@stable..."
-npm install -g @withgraphite/graphite-cli@stable
+# Install Graphite CLI via Homebrew as non-root user
+echo "Installing graphite via homebrew..."
+if [ "${USERNAME}" = "root" ]; then
+    # If we must run as root, use HOMEBREW_FORCE_BREWED_CURL
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export NONINTERACTIVE=1
+    HOMEBREW_FORCE_BREWED_CURL=1 brew install withgraphite/tap/graphite || {
+        echo "Warning: brew install failed as root, trying with su..."
+        # Create a temporary user if needed
+        if ! id -u linuxbrew > /dev/null 2>&1; then
+            useradd -m -s /bin/bash linuxbrew
+        fi
+        chown -R linuxbrew:linuxbrew /home/linuxbrew/.linuxbrew
+        mkdir -p /home/linuxbrew/.cache
+        chown -R linuxbrew:linuxbrew /home/linuxbrew/.cache
+        su - linuxbrew << 'EOF'
+export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+export HOMEBREW_NO_AUTO_UPDATE=1
+brew install withgraphite/tap/graphite
+EOF
+    }
+else
+    # Run as non-root user
+    su - ${USERNAME} << 'EOF'
+export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+export HOMEBREW_NO_AUTO_UPDATE=1
+brew install withgraphite/tap/graphite
+EOF
+fi
 
 echo "✅ Graphite CLI installed successfully!"
 gt --version

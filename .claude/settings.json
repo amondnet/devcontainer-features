@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(devcontainer features test:*)",
+      "Bash(gh api repos:*)",
+      "Bash(xargs curl -s)",
+      "WebSearch",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

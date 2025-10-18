@@ -2,7 +2,10 @@
   "id": "graphite",
   "version": "1.0.0",
   "name": "Graphite CLI",
-  "description": "Installs Graphite CLI for stacked pull request workflows (via npm)",
+  "description": "Installs Graphite CLI for stacked pull request workflows (via homebrew)",
   "documentationURL": "https://github.com/amondnet/devcontainer-features/tree/main/src/graphite",
-  "options": {}
+  "options": {},
+  "dependsOn": {
+    "ghcr.io/meaningful-ooo/devcontainer-features/homebrew": {}
+  }
 }
