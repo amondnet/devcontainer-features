@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-VERSION="${VERSION:-"stable"}"
+# Save feature options BEFORE sourcing /etc/os-release
+GRAPHITE_VERSION="${VERSION:-"stable"}"
 
 # Bring in ID, ID_LIKE, VERSION_ID, VERSION_CODENAME
 . /etc/os-release
@@ -56,8 +57,8 @@ echo "Node.js found: $(node --version)"
 echo "npm found: $(npm --version)"
 
 # Install Graphite CLI via npm globally
-echo "Installing @withgraphite/graphite-cli@${VERSION}..."
-npm install -g "@withgraphite/graphite-cli@${VERSION}"
+echo "Installing @withgraphite/graphite-cli@${GRAPHITE_VERSION}..."
+npm install -g "@withgraphite/graphite-cli@${GRAPHITE_VERSION}"
 
 echo "✅ Graphite CLI installed successfully!"
 gt --version

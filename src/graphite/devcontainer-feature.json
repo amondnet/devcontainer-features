@@ -29,6 +29,6 @@
     }
   },
   "dependsOn": {
-    "ghcr.io/devcontainers/features/node:1": {}
+    "ghcr.io/amondnet/devcontainer-features/node": {}
   }
 }
