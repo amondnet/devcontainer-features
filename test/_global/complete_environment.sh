@@ -39,9 +39,6 @@ check "pnpm installed" bash -c "command -v pnpm"
 check "bun installed" bash -c "command -v bun"
 check "deno installed" bash -c "command -v deno"
 
-# JVM ecosystem
-check "sdkman directory" bash -c "test -d $HOME/.sdkman"
-
 # Development tools
 check "claude-code path" bash -c "test -d $HOME/.local/bin"
 
